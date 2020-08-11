@@ -1,37 +1,27 @@
 package com.example.mindchess
 
 import android.content.Intent
-import android.graphics.drawable.AnimationDrawable
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
-import com.example.mindchess.common.startWithFade
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
+
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        (wheelchair_man.drawable as AnimationDrawable).start()
-
-        // startActivity(Intent(this, ChessActivity::class.java))
-
-        // Menu, choose chess or poker..
-    }
-
-    infix fun Int.greaterThan(other : Int) : Int {
-        var result = this
-
-        if (this < other) {
-            result = other
+        play_button.setOnClickListener {
+            val intent = Intent(this, ChessActivity::class.java)
+            startActivity(intent)
         }
-        return result
+
     }
 
-    override fun onPause() {
-        super.onPause()
-        (wheelchair_man.drawable as AnimationDrawable).stop()
-    }
+
 
 }
