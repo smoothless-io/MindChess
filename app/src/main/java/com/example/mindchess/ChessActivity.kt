@@ -1,52 +1,44 @@
 package com.example.mindchess
 
 import android.Manifest
-import android.content.pm.PackageManager
-import android.media.*
+import android.graphics.BitmapFactory
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 
-import be.tarsos.dsp.AudioDispatcher
-import be.tarsos.dsp.AudioEvent
-import be.tarsos.dsp.AudioProcessor
 import be.tarsos.dsp.io.TarsosDSPAudioFormat
-import be.tarsos.dsp.io.android.AndroidAudioInputStream
+import be.tarsos.dsp.io.android.AndroidAudioPlayer
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
-import be.tarsos.dsp.pitch.PitchDetectionHandler
-import be.tarsos.dsp.pitch.PitchDetectionResult
-import be.tarsos.dsp.pitch.PitchProcessor
+import com.example.mindchess.audio_processing.*
 
 private const val LOG_TAG = "AudioTest"
 
 
 class ChessActivity : AppCompatActivity() {
 
-    private var audioDispatcher: AudioDispatcher? = null
+    private var gameController: DefaultGameController? = null
+    private var gameFactory: GameFactory? = null
+
 
     private val dangerousPermissions = arrayOf(
         Manifest.permission.RECORD_AUDIO
     )
 
-    private var
-
-    private var isRecording = false
     private var sampleRate = 22050
-    private var bufferSize = 1024
-
-    private var audioRecord: AudioRecord? = null
-    private var audioTrack: AudioTrack? = null
-    private var recordingThread: Thread? = null
+    private var bufferSize = 22050
+    private var bufferOverlap = 0
 
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_chess)
+
+        val chessView = ChessGameView(this)
+        setContentView(chessView)
 
         val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
                 result ->
@@ -61,9 +53,29 @@ class ChessActivity : AppCompatActivity() {
 
         requestPermissionLauncher.launch(dangerousPermissions)
 
-        audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, 0)
+        gameFactory = DefaultGameFactory(
+            PieceImageProvider(
+                BitmapFactory.decodeResource(resources, R.drawable.white_pawn),
+                BitmapFactory.decodeResource(resources, R.drawable.white_knight),
+                BitmapFactory.decodeResource(resources, R.drawable.white_bishop),
+                BitmapFactory.decodeResource(resources, R.drawable.white_rook),
+                BitmapFactory.decodeResource(resources, R.drawable.white_queen),
+                BitmapFactory.decodeResource(resources, R.drawable.white_king)
+            ),
+
+            PieceImageProvider(
+                BitmapFactory.decodeResource(resources, R.drawable.black_pawn),
+                BitmapFactory.decodeResource(resources, R.drawable.black_knight),
+                BitmapFactory.decodeResource(resources, R.drawable.black_bishop),
+                BitmapFactory.decodeResource(resources, R.drawable.black_rook),
+                BitmapFactory.decodeResource(resources, R.drawable.black_queen),
+                BitmapFactory.decodeResource(resources, R.drawable.black_king)
+            )
+        )
 
 
+        gameController = DefaultGameController(gameFactory!!.createNewGame())
+        gameController!!.addViewModelListener(chessView)
     }
 
 
@@ -71,65 +83,36 @@ class ChessActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun startRecording() {
-        var minBufferSize = AudioRecord.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
-        )
+        val audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, bufferOverlap)
 
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            minBufferSize
-        )
+        val audioPlayer = AndroidAudioPlayer(TarsosDSPAudioFormat(sampleRate.toFloat(), 16, 1, false, false), bufferSize, AudioManager.STREAM_MUSIC)
 
-        audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build())
-            .setAudioFormat(AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(sampleRate)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                .build())
-            .setBufferSizeInBytes(minBufferSize)
-            .build()
+        val sifAnalyzer = SifAnalyzer(KeywordSpottingService(), object : OnCommandFormed {
 
-
-        recordingThread = Thread(Runnable {
-
-            var size = 0
-            val byteArray = ByteArray(minBufferSize)
-
-            isRecording = true
-            audioRecord?.startRecording()
-
-            while (isRecording && audioRecord != null) {
-
-                size = audioRecord!!.read(byteArray, 0, minBufferSize)
-
-                if (AudioRecord.ERROR_INVALID_OPERATION != size) {
-                    audioTrack!!.write(byteArray, 0, minBufferSize)
-                    audioTrack!!.play()
-                    Log.v(LOG_TAG, "Writing and playing something.")
+            override fun handleCommand(command: Command) {
+                if (command is MoveCommand) {
+                    Log.v(LOG_TAG, "MOVE COMMAND " + command.piece_name + " " + command.origin_coordinate.toString() + " " + command.destination_coordinate.toString())
+                    gameController?.processMoveCommand(command)
+                } else if (command is SpecialCommand) {
+                    Log.v(LOG_TAG, "SPECIAL COMMAND")
+                    gameController?.processSpecialCommand(command)
                 }
+
+
             }
 
         })
 
-        recordingThread?.start()
+
+        //audioDispatcher.addAudioProcessor(audioPlayer)
+        audioDispatcher.addAudioProcessor(sifAnalyzer)
+
+
+        Thread(audioDispatcher, "Recording Thread").start()
     }
 
     override fun onPause() {
         super.onPause()
-        isRecording = false
-        audioRecord?.release()
-        audioRecord = null
-        audioTrack?.release()
-        audioTrack = null
     }
 
 }

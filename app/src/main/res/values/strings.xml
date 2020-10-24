@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">MindChess</string>
     <string name="title_activity_chess">ChessActivity</string>
+    <string name="title_activity_tarsosdsp">TarsosDSPActivity</string>
 
     <string name="play_button">Start a chess match</string>
     <string name="settings_button">Settings</string>

@@ -1,16 +1,54 @@
 package com.example.mindchess.chess_mechanics
 
-class Rook() {
+import android.graphics.Bitmap
+import com.example.mindchess.Coordinate
+import com.example.mindchess.isOnBoard
+import com.example.mindchess.move
 
-    var id = ""
+class Rook(
+    override val team: Int,
+    override var coordinate: Coordinate,
+    override val image: Bitmap?
+) : Piece() {
 
-    constructor(id: String) : this() {
-        this.id = id
+    override val name = "ROOK"
+    override val value = 5
+
+    override fun findPossibleMoves(piece_setup: MutableMap<Coordinate, Piece>) {
+
+        super.findPossibleMoves(piece_setup)
+
+        for (i in 0..3) {
+            val step = Coordinate(
+                Math.round(Math.cos(i * Math.PI / 2)).toInt(),
+                Math.round(Math.sin(i * Math.PI / 2)).toInt()
+            )
+
+            val temp_coordinate = Coordinate(coordinate.x + step.x, coordinate.y + step.y)
+
+            while (temp_coordinate.isOnBoard() && (piece_setup[temp_coordinate] == null || piece_setup[temp_coordinate]!!.team * team == -1)) {
+                legal_moves.add(temp_coordinate.copy())
+
+                if (piece_setup[temp_coordinate] != null) {
+
+                    if (piece_setup[temp_coordinate]!!.name == "KING") {
+                        // Figure out what
+                        break
+                    }
+
+                    break
+                }
+
+                temp_coordinate.move(step)
+            }
+
+        }
     }
 
-    constructor(other: Rook) : this() {
-        this.id = other.id
+    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
+        TODO("Not yet implemented")
     }
+
 
 }
 

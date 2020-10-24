@@ -2,8 +2,8 @@ package com.example.mindchess.audio_processing
 
 import com.example.mindchess.Coordinate
 
-data class MoveCommand(
-    var piece_id: String,
-    var origin_coordinate: Coordinate,
-    var destination_coordinate: Coordinate
-) : Command
+data class KeywordPool(
+    var keywords: List<String>,
+    var active: Boolean,
+    var model_id: Int
+)
