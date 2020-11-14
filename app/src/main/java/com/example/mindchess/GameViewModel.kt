@@ -3,7 +3,8 @@ package com.example.mindchess
 import com.example.mindchess.chess_mechanics.Piece
 
 data class GameViewModel(
-    var pieces: Collection<Piece>
+    var pieces: Collection<Piece>,
+    var selected_coordinate: Coordinate?
 ) {
 
 }

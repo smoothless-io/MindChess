@@ -8,7 +8,7 @@ class DefaultGameFactory(
 ) : GameFactory {
 
     override fun createNewGame(): Game {
-        val piece_setup: MutableMap<Coordinate, Piece> = mutableMapOf()
+        val piece_setup: Array<MutableMap<Coordinate, Piece>> = arrayOf(mutableMapOf(), mutableMapOf())
 
         populatePieces(piece_setup)
 
@@ -29,70 +29,70 @@ class DefaultGameFactory(
         black_piece_image_provider
     )
 
-    private fun populatePieces(piece_setup: MutableMap<Coordinate, Piece>) {
-        var location: Coordinate?
+    private fun populatePieces(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
+        var coordinate: Coordinate?
 
         // Pawns
         for (i in 0..7) {
-            location = Coordinate(i, 1)
-            piece_setup[location] = white_piece_factory.createPawn(location)
+            coordinate = Coordinate(i, 1)
+            piece_setup[0][coordinate] = white_piece_factory.createPawn(coordinate)
 
-            location = Coordinate(i, 6)
-            piece_setup[location] = black_piece_factory.createPawn(location)
+            coordinate = Coordinate(i, 6)
+            piece_setup[1][coordinate] = black_piece_factory.createPawn(coordinate)
         }
 
         // Knights
-        location = Coordinate(1, 0)
-        piece_setup[location] = white_piece_factory.createKnight(location)
+        coordinate = Coordinate(1, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createKnight(coordinate)
 
-        location = Coordinate(6, 0)
-        piece_setup[location] = white_piece_factory.createKnight(location)
+        coordinate = Coordinate(6, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createKnight(coordinate)
 
-        location = Coordinate(1, 7)
-        piece_setup[location] = black_piece_factory.createKnight(location)
+        coordinate = Coordinate(1, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createKnight(coordinate)
 
-        location = Coordinate(6, 7)
-        piece_setup[location] = black_piece_factory.createKnight(location)
+        coordinate = Coordinate(6, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createKnight(coordinate)
 
         // Bishops
-        location = Coordinate(2, 0)
-        piece_setup[location] = white_piece_factory.createBishop(location)
+        coordinate = Coordinate(2, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createBishop(coordinate)
 
-        location = Coordinate(5, 0)
-        piece_setup[location] = white_piece_factory.createBishop(location)
+        coordinate = Coordinate(5, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createBishop(coordinate)
 
-        location = Coordinate(2, 7)
-        piece_setup[location] = black_piece_factory.createBishop(location)
+        coordinate = Coordinate(2, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createBishop(coordinate)
 
-        location = Coordinate(5, 7)
-        piece_setup[location] = black_piece_factory.createBishop(location)
+        coordinate = Coordinate(5, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createBishop(coordinate)
 
         // Rooks
-        location = Coordinate(0, 0)
-        piece_setup[location] = white_piece_factory.createRook(location)
+        coordinate = Coordinate(0, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createRook(coordinate)
 
-        location = Coordinate(7, 0)
-        piece_setup[location] = white_piece_factory.createRook(location)
+        coordinate = Coordinate(7, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createRook(coordinate)
 
-        location = Coordinate(0, 7)
-        piece_setup[location] = black_piece_factory.createRook(location)
+        coordinate = Coordinate(0, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createRook(coordinate)
 
-        location = Coordinate(7, 7)
-        piece_setup[location] = black_piece_factory.createRook(location)
+        coordinate = Coordinate(7, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createRook(coordinate)
 
         // Queens
-        location = Coordinate(3, 0)
-        piece_setup[location] = white_piece_factory.createQueen(location)
+        coordinate = Coordinate(3, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createQueen(coordinate)
 
-        location = Coordinate(3, 7)
-        piece_setup[location] = black_piece_factory.createQueen(location)
+        coordinate = Coordinate(3, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createQueen(coordinate)
 
         // Kings
-        location = Coordinate(4, 0)
-        piece_setup[location] = white_piece_factory.createKing(location)
+        coordinate = Coordinate(4, 0)
+        piece_setup[0][coordinate] = white_piece_factory.createKing(coordinate)
 
-        location = Coordinate(4, 7)
-        piece_setup[location] = black_piece_factory.createKing(location)
+        coordinate = Coordinate(4, 7)
+        piece_setup[1][coordinate] = black_piece_factory.createKing(coordinate)
     }
 
 }

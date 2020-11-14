@@ -8,12 +8,11 @@ import android.graphics.Rect
 import android.os.Build
 import android.util.Log
 import android.view.Display
+import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.annotation.RequiresApi
-import com.example.mindchess.common.BOARD_TILES
-import com.example.mindchess.common.DARK_SQUARE_COLOR
-import com.example.mindchess.common.LIGHT_SQUARE_COLOR
+import com.example.mindchess.common.*
 import com.example.mindchess.common.toInt
 import java.lang.Integer.min
 import java.lang.Math.max
@@ -28,11 +27,13 @@ private data class BoardInfo(
     val tileSize: Int,
     val topLeftPoint: Point,
     val lightSquarePaint: Paint,
-    val darkSquarePaint: Paint
+    val darkSquarePaint: Paint,
+    val selectedSquarePaint: Paint
 )
 
 class ChessGameView(context: Context) : SurfaceView(context), GameEventListener {
 
+    private var viewListeners = arrayListOf<ChessGameViewListener>()
     private var gameViewModel: GameViewModel? = null
 
     private lateinit var boardInfo: BoardInfo
@@ -78,13 +79,14 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
         val darkSquarePaint = Paint()
         darkSquarePaint.color = DARK_SQUARE_COLOR
 
+        val selectedSquarePaint = Paint()
+        selectedSquarePaint.color = SELECTED_SQUARE_COLOR
+
         val topLeftPoint = Point()
         topLeftPoint.set(
             (size.width() > size.height()).toInt() * (size.width() - size.height()) / 2,
             (size.height() > size.width()).toInt() * (size.height() - size.width()) / 2
         )
-
-
 
 
         return BoardInfo(
@@ -93,7 +95,8 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
             tileSize = tileSize,
             topLeftPoint = topLeftPoint,
             lightSquarePaint = lightSquarePaint,
-            darkSquarePaint = darkSquarePaint
+            darkSquarePaint = darkSquarePaint,
+            selectedSquarePaint = selectedSquarePaint
         )
 
 
@@ -125,6 +128,17 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
                 }
             }
 
+            if (gameViewModel?.selected_coordinate != null) {
+                val rect = Rect(
+                    boardInfo.topLeftPoint.x + gameViewModel!!.selected_coordinate!!.x * boardInfo . tileSize,
+                    boardInfo.topLeftPoint.y + (BOARD_TILES - 1 - gameViewModel!!.selected_coordinate!!.y) * boardInfo.tileSize,
+                    boardInfo.topLeftPoint.x + (gameViewModel!!.selected_coordinate!!.x + 1) * boardInfo.tileSize,
+                    boardInfo.topLeftPoint.y + (BOARD_TILES - gameViewModel!!.selected_coordinate!!.y) * boardInfo.tileSize
+                )
+
+                canvas.drawRect(rect, boardInfo.selectedSquarePaint)
+            }
+
 
             gameViewModel?.pieces?.forEach {
                 if (it.image != null) {
@@ -153,11 +167,53 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
         return Rect(left, top, right, bottom)
     }
 
+    private fun touchToCoordinate(x: Int, y: Int) : Coordinate? {
+
+        return Coordinate((x - boardInfo.topLeftPoint.x) / boardInfo.tileSize , BOARD_TILES - 1 - (y - boardInfo.topLeftPoint.y) / boardInfo.tileSize)
+    }
+
+
+    fun addViewListener(listener: ChessGameViewListener) {
+        viewListeners.add(listener)
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onViewModelChange(viewModel: GameViewModel) {
         gameViewModel = viewModel
         drawBoard()
     }
+
+
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+
+        if (event != null) {
+            when (event.action and MotionEvent.ACTION_MASK) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    val selectedCoordinate = touchToCoordinate(event.x.toInt(), event.y.toInt())
+
+                    if (selectedCoordinate != null) {
+                        viewListeners.forEach {
+                            it.onCoordinateSelected(selectedCoordinate)
+                        }
+                    }
+
+                    performClick()
+                }
+            }
+        }
+
+        return true
+    }
+
+
+
 
 
 }

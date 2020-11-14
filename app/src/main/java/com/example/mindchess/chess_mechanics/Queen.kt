@@ -14,9 +14,11 @@ class Queen(
     override val name = "QUEEN"
     override val value = 9
 
-    override fun findPossibleMoves(piece_setup: MutableMap<Coordinate, Piece>) {
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
 
         super.findPossibleMoves(piece_setup)
+
+        val piece_setup_mixed = getPieceSetupMixed(piece_setup)
 
         for (i in 0..7) {
             val step = Coordinate(
@@ -26,12 +28,12 @@ class Queen(
 
             val temp_coordinate = Coordinate(coordinate.x + step.x, coordinate.y + step.y)
 
-            while (temp_coordinate.isOnBoard() && (piece_setup[temp_coordinate] == null || piece_setup[temp_coordinate]!!.team * team == -1)) {
+            while (temp_coordinate.isOnBoard() && (piece_setup_mixed[temp_coordinate] == null || piece_setup_mixed[temp_coordinate]!!.team * team == -1)) {
                 legal_moves.add(temp_coordinate.copy())
 
-                if (piece_setup[temp_coordinate] != null) {
+                if (piece_setup_mixed[temp_coordinate] != null) {
 
-                    if (piece_setup[temp_coordinate]!!.name == "KING") {
+                    if (piece_setup_mixed[temp_coordinate]!!.name == "KING") {
                         // Figure out what
                         break
                     }

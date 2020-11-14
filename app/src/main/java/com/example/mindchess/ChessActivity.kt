@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -76,6 +77,14 @@ class ChessActivity : AppCompatActivity() {
 
         gameController = DefaultGameController(gameFactory!!.createNewGame())
         gameController!!.addViewModelListener(chessView)
+
+
+        chessView.addViewListener(object : ChessGameViewListener {
+            override fun onCoordinateSelected(coordinate: Coordinate) {
+                gameController?.processTouch(coordinate)
+            }
+        })
+
     }
 
 
@@ -90,13 +99,15 @@ class ChessActivity : AppCompatActivity() {
         val sifAnalyzer = SifAnalyzer(KeywordSpottingService(), object : OnCommandFormed {
 
             override fun handleCommand(command: Command) {
-                if (command is MoveCommand) {
-                    Log.v(LOG_TAG, "MOVE COMMAND " + command.piece_name + " " + command.origin_coordinate.toString() + " " + command.destination_coordinate.toString())
-                    gameController?.processMoveCommand(command)
-                } else if (command is SpecialCommand) {
-                    Log.v(LOG_TAG, "SPECIAL COMMAND")
-                    gameController?.processSpecialCommand(command)
-                }
+                gameController?.processVoiceCommand(command)
+
+//                if (command is MoveCommand) {
+//                    Log.v(LOG_TAG, "MOVE COMMAND " + command.piece_name + " " + command.origin_coordinate.toString() + " " + command.destination_coordinate.toString())
+//                    gameController?.processMoveCommand(command)
+//                } else if (command is SpecialCommand) {
+//                    Log.v(LOG_TAG, "SPECIAL COMMAND")
+//                    gameController?.processSpecialCommand(command)
+//                }
 
 
             }

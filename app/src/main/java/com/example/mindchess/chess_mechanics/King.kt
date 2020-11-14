@@ -3,6 +3,7 @@ package com.example.mindchess.chess_mechanics
 import android.graphics.Bitmap
 import com.example.mindchess.Coordinate
 import com.example.mindchess.common.BOARD_TILES
+import com.example.mindchess.common.toInt
 import com.example.mindchess.isOnBoard
 
 class King(
@@ -14,37 +15,47 @@ class King(
     override val name = "KING"
     override val value = 4
 
-    override fun findPossibleMoves(piece_setup: MutableMap<Coordinate, Piece>) {
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
 
+        super.findPossibleMoves(piece_setup)
 
-        for (i in 0..8) {
-            val temp_coordinate = Coordinate(
+        val piece_setup_mixed = getPieceSetupMixed(piece_setup)
+
+        for (i in 0..7) {
+            val step = Coordinate(
                 Math.round(Math.cos(i * Math.PI / 4)).toInt(),
                 Math.round(Math.sin(i * Math.PI / 4)).toInt()
             )
 
-            if (temp_coordinate.isOnBoard() && (piece_setup[temp_coordinate] == null || piece_setup[temp_coordinate]!!.team * team == -1)) { //&& piece_setup[temp_coordinate]!!.id != "KING"
+            val temp_coordinate = Coordinate(coordinate.x + step.x, coordinate.y + step.y)
+
+            if (temp_coordinate.isOnBoard() && (piece_setup_mixed[temp_coordinate] == null || piece_setup_mixed[temp_coordinate]!!.team * team == -1)) { //&& piece_setup_mixed[temp_coordinate]!!.id != "KING"
                 legal_moves.add(temp_coordinate)
             }
         }
 
 
         if (move_count == 0) {
-            if (!piece_setup.keys.contains(Coordinate(coordinate.x + 1, coordinate.y)) &&
-                !piece_setup.keys.contains(Coordinate(coordinate.x + 2, coordinate.y)) &&
-                piece_setup[Coordinate(coordinate.x + 3, coordinate.y)] != null &&
-                piece_setup[Coordinate(coordinate.x + 3, coordinate.y)]!!.name == "ROOK" &&
-                piece_setup[Coordinate(coordinate.x + 3, coordinate.y)]!!.move_count == 0) {
+            if (!piece_setup_mixed.keys.contains(Coordinate(coordinate.x + 1, coordinate.y)) &&
+                !piece_setup_mixed.keys.contains(Coordinate(coordinate.x + 2, coordinate.y)) &&
+                piece_setup_mixed[Coordinate(coordinate.x + 3, coordinate.y)] != null &&
+                piece_setup_mixed[Coordinate(coordinate.x + 3, coordinate.y)]!!.name == "ROOK" &&
+                piece_setup_mixed[Coordinate(coordinate.x + 3, coordinate.y)]!!.move_count == 0) {
                     legal_moves.add(Coordinate(coordinate.x + 2, coordinate.y))
             } else if (
-                !piece_setup.keys.contains(Coordinate(coordinate.x - 1, coordinate.y)) &&
-                !piece_setup.keys.contains(Coordinate(coordinate.x - 2, coordinate.y)) &&
-                !piece_setup.keys.contains(Coordinate(coordinate.x - 3, coordinate.y)) &&
-                piece_setup[Coordinate(coordinate.x - 4, coordinate.y)] != null &&
-                piece_setup[Coordinate(coordinate.x - 4, coordinate.y)]!!.name == "ROOK" &&
-                piece_setup[Coordinate(coordinate.x - 4, coordinate.y)]!!.move_count == 0) {
-                    legal_moves.add(Coordinate(coordinate.x - 3, coordinate.y))
+                !piece_setup_mixed.keys.contains(Coordinate(coordinate.x - 1, coordinate.y)) &&
+                !piece_setup_mixed.keys.contains(Coordinate(coordinate.x - 2, coordinate.y)) &&
+                !piece_setup_mixed.keys.contains(Coordinate(coordinate.x - 3, coordinate.y)) &&
+                piece_setup_mixed[Coordinate(coordinate.x - 4, coordinate.y)] != null &&
+                piece_setup_mixed[Coordinate(coordinate.x - 4, coordinate.y)]!!.name == "ROOK" &&
+                piece_setup_mixed[Coordinate(coordinate.x - 4, coordinate.y)]!!.move_count == 0) {
+                    legal_moves.add(Coordinate(coordinate.x - 2, coordinate.y))
             }
+        }
+
+        print("KING'S MOVES:")
+        for (move in legal_moves) {
+            println(move.toString())
         }
 
 
@@ -57,16 +68,28 @@ class King(
     }
 
     override fun move(
-        piece_setup: MutableMap<Coordinate, Piece>,
+        piece_setup: Array<MutableMap<Coordinate, Piece>>,
         destination_coordinate: Coordinate
     ) {
 
+        val team_index = (team < 0).toInt()
+
+
         if (destination_coordinate.x == coordinate.x + 2) {
             super.move(piece_setup, destination_coordinate)
-            piece_setup[Coordinate(coordinate.x + 3, coordinate.y)]?.coordinate = Coordinate(coordinate.x + 1, coordinate.y)
-        } else if (destination_coordinate.x == coordinate.x - 3) {
+
+            piece_setup[team_index][Coordinate(coordinate.x - 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x + 1, coordinate.y))!!
+            piece_setup[team_index][Coordinate(coordinate.x - 1, coordinate.y)]!!.coordinate = Coordinate(coordinate.x - 1, coordinate.y)
+
+
+        } else if (destination_coordinate.x == coordinate.x - 2) {
             super.move(piece_setup, destination_coordinate)
-            piece_setup[Coordinate(coordinate.x - 4, coordinate.y)]?.coordinate = Coordinate(coordinate.x - 2, coordinate.y)
+            
+            piece_setup[team_index][Coordinate(coordinate.x + 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x - 2, coordinate.y))!!
+            piece_setup[team_index][Coordinate(coordinate.x + 1, coordinate.y)]!!.coordinate = Coordinate(coordinate.x + 1, coordinate.y)
+        } else {
+
+            super.move(piece_setup, destination_coordinate)
         }
 
     }

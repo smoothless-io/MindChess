@@ -1,47 +1,64 @@
 package com.example.mindchess
 
+import com.example.mindchess.audio_processing.MoveCommand
 import com.example.mindchess.chess_mechanics.Piece
+import com.example.mindchess.common.toInt
 
 class DefaultBoard(
-    val piece_setup: MutableMap<Coordinate, Piece>
+    val piece_setup: Array<MutableMap<Coordinate, Piece>>
 ) : Board {
 
-    override var turn = 1
 
-    init {
-        for (piece in piece_setup.values) {
-            piece.legal_moves.clear()
-            piece.findPossibleMoves(piece_setup)
-        }
-    }
+    override fun playMove(team: Int, command: MoveCommand) : Boolean {
 
-    override fun playMove(piece_name: String, origin_coordinate: Coordinate?, destination_coordinate: Coordinate) {
+        var move_played_successfully = false
+        var piece: Piece? = null
 
 
-        if (origin_coordinate != null) {
 
-            piece_setup[origin_coordinate]?.move(piece_setup, destination_coordinate)
-
-        } else {
-            for (piece in piece_setup.values) {
-                if (piece_name == piece.name && turn == piece.team && piece.legal_moves.contains(destination_coordinate)) {
-                    piece.move(piece_setup, destination_coordinate)
+        if (command.piece != null)
+            piece = command.piece
+        else if (command.origin_coordinate != null)
+            piece = piece_setup[team][command.destination_coordinate]
+        else if (command.piece_name != null) {
+            for (_piece in piece_setup[team].values) {
+                if (command.piece_name == _piece.name && _piece.legal_moves.contains(command.destination_coordinate)) {
+                    piece = _piece
                     break
                 }
             }
         }
 
-        for (piece in piece_setup.values) {
-            piece.findPossibleMoves(piece_setup)
+        if (piece != null && piece.legal_moves.contains(command.destination_coordinate)) {
+            piece.move(piece_setup, command.destination_coordinate)
+            move_played_successfully = true
         }
 
-        turn *= -1
 
+        return move_played_successfully
 
     }
 
-    override fun getPieces(): Collection<Piece>{
-        return piece_setup.values
+
+    override fun findLegalMoves(team: Int) {
+
+        for (piece in piece_setup[team].values) {
+            piece.legal_moves.clear()
+            piece.findPossibleMoves(piece_setup)
+        }
+    }
+
+
+    override fun getPieceSetup(team: Int) : MutableMap<Coordinate, Piece> {
+        return piece_setup[team]
+    }
+
+    override fun getPieces(): Collection<Piece> {
+        val pieces = arrayListOf<Piece>()
+        for (team_pieces in piece_setup) {
+            pieces.addAll(team_pieces.values)
+        }
+        return pieces
     }
 
 }

@@ -1,6 +1,7 @@
 package com.example.mindchess
 
 import android.util.Log
+import com.example.mindchess.audio_processing.Command
 import com.example.mindchess.audio_processing.MoveCommand
 import com.example.mindchess.audio_processing.SpecialCommand
 import com.example.mindchess.chess_mechanics.Piece
@@ -12,8 +13,9 @@ class DefaultGameController(
 ) : GameController {
 
 
+
     private var viewModel: GameViewModel = GameViewModel(
-        game.getCurrentBoard().getPieces()
+        game.getCurrentBoard().getPieces(), game.getSelectedCoordinate()
     )
 
     private var listeners = mutableListOf<GameEventListener>()
@@ -25,25 +27,21 @@ class DefaultGameController(
 
     //Updating and playing with viewModel state in this class
 
-    override fun updateViewModel(pieces: Collection<Piece>) {
+    override fun updateViewModel(pieces: Collection<Piece>, selected_coordinate: Coordinate?) {
         viewModel.pieces = pieces
+        viewModel.selected_coordinate = selected_coordinate
         listeners.forEach {it.onViewModelChange(viewModel)}
     }
 
-    override fun processSpecialCommand(command: SpecialCommand) {
 
-        for (word in command.command) {
-            Log.v(LOG_TAG, word)
-        }
-
+    override fun processTouch(coordinate: Coordinate) {
+        game.processTouch(coordinate)
+        updateViewModel(game.getCurrentBoard().getPieces(), game.getSelectedCoordinate())
     }
 
-    override fun processMoveCommand(command: MoveCommand) {
-
-        game.playMove(command.piece_name, command.origin_coordinate, command.destination_coordinate)
-        updateViewModel(game.getCurrentBoard().getPieces())
-
+    override fun processVoiceCommand(command: Command) {
+        game.processVoiceCommand(command)
+        updateViewModel(game.getCurrentBoard().getPieces(), game.getSelectedCoordinate())
     }
-
 
 }
