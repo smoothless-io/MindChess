@@ -7,13 +7,13 @@ import com.example.mindchess.common.toInt
 abstract class Piece {
 
     abstract val team: Int
-    abstract val name: String
-    abstract val value: Int
     abstract val image: Bitmap?
     abstract var coordinate: Coordinate
+    abstract var move_count: Int
+    abstract val legal_moves: ArrayList<Coordinate>
 
-    val legal_moves: ArrayList<Coordinate> = arrayListOf()
-    var move_count: Int = 0
+    abstract val name: String
+    abstract val value: Int
 
 
     companion object {
@@ -28,10 +28,12 @@ abstract class Piece {
         return piece_setup_mixed
     }
 
-    open fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
+
+    open fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
         legal_moves.clear()
+        return false
     }
-    abstract fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>)
+
 
 
     open fun move(piece_setup: Array<MutableMap<Coordinate, Piece>>, destination_coordinate: Coordinate) {
@@ -48,6 +50,8 @@ abstract class Piece {
         move_count += 1
         last_moved_piece = this
     }
+
+    abstract fun copy() : Piece
 
 
 }

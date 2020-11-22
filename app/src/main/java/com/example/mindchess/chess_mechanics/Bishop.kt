@@ -8,16 +8,19 @@ import com.example.mindchess.move
 class Bishop(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?
+    override val image: Bitmap?,
+    override var move_count: Int = 0,
+    override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "BISHOP"
     override val value = 3
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
-        super.findPossibleMoves(piece_setup)
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
+        var yields_check = super.findPossibleMoves(piece_setup)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
+
 
         for (i in 0..3) {
             val step = Coordinate(
@@ -34,8 +37,7 @@ class Bishop(
                 if (piece_setup_mixed[temp_coordinate] != null) {
 
                     if (piece_setup_mixed[temp_coordinate]!!.name == "KING") {
-                        // Figure out what
-                        break
+                        yields_check = true
                     }
 
                     break
@@ -46,10 +48,13 @@ class Bishop(
 
         }
 
+        return yields_check
+
     }
 
-    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
-        TODO("Not yet implemented")
+    override fun copy(): Piece {
+        return Bishop(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
     }
+
 
 }

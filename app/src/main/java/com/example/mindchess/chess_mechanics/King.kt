@@ -9,15 +9,17 @@ import com.example.mindchess.isOnBoard
 class King(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?
+    override val image: Bitmap?,
+    override var move_count: Int = 0,
+    override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "KING"
     override val value = 4
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
 
-        super.findPossibleMoves(piece_setup)
+        var yields_check = super.findPossibleMoves(piece_setup)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
 
@@ -30,6 +32,9 @@ class King(
             val temp_coordinate = Coordinate(coordinate.x + step.x, coordinate.y + step.y)
 
             if (temp_coordinate.isOnBoard() && (piece_setup_mixed[temp_coordinate] == null || piece_setup_mixed[temp_coordinate]!!.team * team == -1)) { //&& piece_setup_mixed[temp_coordinate]!!.id != "KING"
+                if (piece_setup_mixed[temp_coordinate] != null && piece_setup_mixed[temp_coordinate]!!.team * team == -1 && piece_setup_mixed[temp_coordinate]!!.name == "KING") {
+                    yields_check = true
+                }
                 legal_moves.add(temp_coordinate)
             }
         }
@@ -53,19 +58,11 @@ class King(
             }
         }
 
-        print("KING'S MOVES:")
-        for (move in legal_moves) {
-            println(move.toString())
-        }
+        return yields_check
 
 
     }
 
-    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
-
-        // simulate a move, does it cause a check? if yes, remove move
-        TODO("Not yet implemented")
-    }
 
     override fun move(
         piece_setup: Array<MutableMap<Coordinate, Piece>>,
@@ -92,6 +89,10 @@ class King(
             super.move(piece_setup, destination_coordinate)
         }
 
+    }
+
+    override fun copy(): Piece {
+        return King(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
     }
 }
 

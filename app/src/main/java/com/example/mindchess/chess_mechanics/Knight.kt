@@ -9,15 +9,17 @@ class Knight(
 
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?
+    override val image: Bitmap?,
+    override var move_count: Int = 0,
+    override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "KNIGHT"
     override val value = 3
 
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
-        super.findPossibleMoves(piece_setup)
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
+        var yields_check = super.findPossibleMoves(piece_setup)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
 
@@ -37,20 +39,20 @@ class Knight(
                     legal_moves.add(temp_coordinate)
 
                     if (piece_setup_mixed[temp_coordinate] != null && piece_setup_mixed[temp_coordinate]!!.name == "KING") {
-                        //capture.. and check
-                        break
+                        yields_check = true
                     }
                 }
             }
         }
 
-
+        return yields_check
 
     }
 
-    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
-        TODO("Not yet implemented")
+    override fun copy(): Piece {
+        return Knight(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
     }
+
 }
 
 

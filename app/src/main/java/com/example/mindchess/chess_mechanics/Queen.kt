@@ -8,15 +8,17 @@ import com.example.mindchess.move
 class Queen(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?
+    override val image: Bitmap?,
+    override var move_count: Int = 0,
+    override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "QUEEN"
     override val value = 9
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
 
-        super.findPossibleMoves(piece_setup)
+        var yields_check = super.findPossibleMoves(piece_setup)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
 
@@ -32,12 +34,9 @@ class Queen(
                 legal_moves.add(temp_coordinate.copy())
 
                 if (piece_setup_mixed[temp_coordinate] != null) {
-
                     if (piece_setup_mixed[temp_coordinate]!!.name == "KING") {
-                        // Figure out what
-                        break
+                        yields_check = true
                     }
-
                     break
                 }
 
@@ -45,10 +44,12 @@ class Queen(
             }
 
         }
+
+        return yields_check
     }
 
-    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
-        TODO("Not yet implemented")
+    override fun copy(): Piece {
+        return Queen(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
     }
 
 }

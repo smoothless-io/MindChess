@@ -42,11 +42,44 @@ class DefaultBoard(
 
     override fun findLegalMoves(team: Int) {
 
+
         for (piece in piece_setup[team].values) {
-            piece.legal_moves.clear()
+
             piece.findPossibleMoves(piece_setup)
+
+            val piece_copy = piece.copy()
+            val illegal_moves = arrayListOf<Coordinate>()
+
+            for (coordinate in piece.legal_moves) {
+                val piece_setup_copy = getPieceSetupCopy()
+
+
+                piece_copy.move(piece_setup_copy, coordinate)
+
+                for (opposite_piece in piece_setup_copy[1 - team].values) {
+                    if (opposite_piece.findPossibleMoves(piece_setup_copy)) {
+                        illegal_moves.add(coordinate)
+                        break
+                    }
+                }
+            }
+
+            piece.legal_moves.removeAll(illegal_moves)
         }
+
     }
+
+    override fun isInCheck(team: Int) : Boolean {
+        for (piece in piece_setup[1 - team].values) {
+            if (piece.findPossibleMoves(piece_setup)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+
 
 
     override fun getPieceSetup(team: Int) : MutableMap<Coordinate, Piece> {
@@ -59,6 +92,18 @@ class DefaultBoard(
             pieces.addAll(team_pieces.values)
         }
         return pieces
+    }
+
+    override fun getPieceSetupCopy(): Array<MutableMap<Coordinate, Piece>> {
+        val copy : Array<MutableMap<Coordinate, Piece>> = arrayOf(mutableMapOf(), mutableMapOf())
+
+        for (team in 0..1) {
+            for (piece in piece_setup[team]) {
+                copy[team][piece.key] = piece.value.copy()
+            }
+        }
+
+        return copy
     }
 
 }

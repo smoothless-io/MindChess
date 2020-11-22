@@ -54,7 +54,6 @@ class DefaultGame(private var board: Board) : Game {
         }
     }
 
-
     override fun getCurrentBoard() : Board {
         return board
     }

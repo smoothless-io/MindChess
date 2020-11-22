@@ -7,14 +7,16 @@ import com.example.mindchess.common.toInt
 class Pawn(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?
+    override val image: Bitmap?,
+    override var move_count: Int = 0,
+    override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "PAWN"
     override val value = 1
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
-        super.findPossibleMoves(piece_setup)
+    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
+        var yields_check = super.findPossibleMoves(piece_setup)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
 
@@ -30,11 +32,19 @@ class Pawn(
 
         if (piece_setup_mixed[Coordinate(coordinate.x + 1, coordinate.y + team)] != null &&
             piece_setup_mixed[Coordinate(coordinate.x + 1, coordinate.y + team)]!!.team * team == -1) {
+            if (piece_setup_mixed[Coordinate(coordinate.x + 1, coordinate.y + team)]!!.name == "KING") {
+                yields_check = true
+            }
             legal_moves.add(Coordinate(coordinate.x + 1, coordinate.y + team))
         }
 
         if (piece_setup_mixed[Coordinate(coordinate.x - 1, coordinate.y + team)] != null &&
             piece_setup_mixed[Coordinate(coordinate.x - 1, coordinate.y + team)]!!.team * team == -1) {
+
+            if (piece_setup_mixed[Coordinate(coordinate.x - 1, coordinate.y + team)]!!.name == "KING") {
+                yields_check = true
+            }
+
             legal_moves.add(Coordinate(coordinate.x - 1, coordinate.y + team))
         }
 
@@ -49,13 +59,10 @@ class Pawn(
                 }
         }
 
-
+        return yields_check
     }
 
 
-    override fun removeIllegalMoves(possible_moves: ArrayList<Coordinate>) {
-        TODO("Not yet implemented")
-    }
 
     override fun move(
         piece_setup: Array<MutableMap<Coordinate, Piece>>,
@@ -74,8 +81,10 @@ class Pawn(
 
         super.move(piece_setup, destination_coordinate)
 
+    }
 
-
+    override fun copy(): Piece {
+        return Pawn(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
     }
 
 }

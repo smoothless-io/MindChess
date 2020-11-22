@@ -8,9 +8,9 @@ interface Board {
 
     fun findLegalMoves(team: Int)
     fun playMove(team: Int, command: MoveCommand) : Boolean
-
-
+    fun isInCheck(team: Int) : Boolean
 
     fun getPieces() : Collection<Piece>
     fun getPieceSetup(team: Int) : MutableMap<Coordinate, Piece>
+    fun getPieceSetupCopy() : Array<MutableMap<Coordinate, Piece>>
 }

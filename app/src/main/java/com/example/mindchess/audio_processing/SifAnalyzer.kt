@@ -60,13 +60,13 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
     override fun process(audioEvent: AudioEvent?): Boolean {
 
         val sifs = extractSifs(audioEvent!!.floatBuffer)
-        //sif_buffer.put(sifs)
 
         for (sif in sifs) {
             val keyword = kss.predict(sif, keyword_pools.values)
 
             if (keyword.length > 0) {
                 val command = formCommand(keyword)
+
 
                 if (command != null) {
                     handler.handleCommand(command)
