@@ -7,8 +7,8 @@ import com.example.mindchess.common.toInt
 abstract class Piece {
 
     abstract val team: Int
-    abstract val image: Bitmap?
     abstract var coordinate: Coordinate
+
     abstract var move_count: Int
     abstract val legal_moves: ArrayList<Coordinate>
 

@@ -1,7 +1,10 @@
 package com.example.mindchess.chess_mechanics
 
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.example.mindchess.Coordinate
+import com.example.mindchess.R
 import com.example.mindchess.common.BOARD_TILES
 import com.example.mindchess.common.toInt
 import com.example.mindchess.isOnBoard
@@ -9,7 +12,7 @@ import com.example.mindchess.isOnBoard
 class King(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?,
+
     override var move_count: Int = 0,
     override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
@@ -71,8 +74,11 @@ class King(
 
         val team_index = (team < 0).toInt()
 
+        println("Coordinate: " + coordinate.toString())
+        println("Destination coordinate: " + destination_coordinate.toString())
 
         if (destination_coordinate.x == coordinate.x + 2) {
+            println("Im about to castle kingside")
             super.move(piece_setup, destination_coordinate)
 
             piece_setup[team_index][Coordinate(coordinate.x - 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x + 1, coordinate.y))!!
@@ -80,6 +86,8 @@ class King(
 
 
         } else if (destination_coordinate.x == coordinate.x - 2) {
+
+            println("Im about to caste queenside.")
             super.move(piece_setup, destination_coordinate)
             
             piece_setup[team_index][Coordinate(coordinate.x + 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x - 2, coordinate.y))!!
@@ -92,7 +100,7 @@ class King(
     }
 
     override fun copy(): Piece {
-        return King(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
+        return King(this.team, this.coordinate, this.move_count, this.legal_moves)
     }
 }
 

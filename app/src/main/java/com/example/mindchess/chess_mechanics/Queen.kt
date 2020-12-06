@@ -1,14 +1,17 @@
 package com.example.mindchess.chess_mechanics
 
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.example.mindchess.Coordinate
+import com.example.mindchess.R
 import com.example.mindchess.isOnBoard
 import com.example.mindchess.move
 
 class Queen(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?,
+
     override var move_count: Int = 0,
     override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
@@ -49,7 +52,7 @@ class Queen(
     }
 
     override fun copy(): Piece {
-        return Queen(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
+        return Queen(this.team, this.coordinate, this.move_count, this.legal_moves)
     }
 
 }

@@ -54,27 +54,7 @@ class ChessActivity : AppCompatActivity() {
 
         requestPermissionLauncher.launch(dangerousPermissions)
 
-        gameFactory = DefaultGameFactory(
-            PieceImageProvider(
-                BitmapFactory.decodeResource(resources, R.drawable.white_pawn),
-                BitmapFactory.decodeResource(resources, R.drawable.white_knight),
-                BitmapFactory.decodeResource(resources, R.drawable.white_bishop),
-                BitmapFactory.decodeResource(resources, R.drawable.white_rook),
-                BitmapFactory.decodeResource(resources, R.drawable.white_queen),
-                BitmapFactory.decodeResource(resources, R.drawable.white_king)
-            ),
-
-            PieceImageProvider(
-                BitmapFactory.decodeResource(resources, R.drawable.black_pawn),
-                BitmapFactory.decodeResource(resources, R.drawable.black_knight),
-                BitmapFactory.decodeResource(resources, R.drawable.black_bishop),
-                BitmapFactory.decodeResource(resources, R.drawable.black_rook),
-                BitmapFactory.decodeResource(resources, R.drawable.black_queen),
-                BitmapFactory.decodeResource(resources, R.drawable.black_king)
-            )
-        )
-
-
+        gameFactory = DefaultGameFactory()
         gameController = DefaultGameController(gameFactory!!.createNewGame())
         gameController!!.addViewModelListener(chessView)
 

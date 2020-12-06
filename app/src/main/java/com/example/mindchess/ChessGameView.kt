@@ -1,10 +1,8 @@
 package com.example.mindchess
 
+import android.app.AlertDialog
 import android.content.Context
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Point
-import android.graphics.Rect
+import android.graphics.*
 import android.os.Build
 import android.util.Log
 import android.view.Display
@@ -35,10 +33,27 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
 
     private var viewListeners = arrayListOf<ChessGameViewListener>()
     private var gameViewModel: GameViewModel? = null
+    private var pieceImageMap: Array<MutableMap<String, Bitmap>> = arrayOf(mutableMapOf(), mutableMapOf())
 
     private lateinit var boardInfo: BoardInfo
 
     init {
+        
+        pieceImageMap[0]["PAWN"] = BitmapFactory.decodeResource(resources, R.drawable.white_pawn)
+        pieceImageMap[0]["KNIGHT"] = BitmapFactory.decodeResource(resources, R.drawable.white_knight)
+        pieceImageMap[0]["BISHOP"] = BitmapFactory.decodeResource(resources, R.drawable.white_bishop)
+        pieceImageMap[0]["ROOK"] = BitmapFactory.decodeResource(resources, R.drawable.white_rook)
+        pieceImageMap[0]["QUEEN"] = BitmapFactory.decodeResource(resources, R.drawable.white_queen)
+        pieceImageMap[0]["KING"] = BitmapFactory.decodeResource(resources, R.drawable.white_king)
+
+        pieceImageMap[1]["PAWN"] = BitmapFactory.decodeResource(resources, R.drawable.black_pawn)
+        pieceImageMap[1]["KNIGHT"] = BitmapFactory.decodeResource(resources, R.drawable.black_knight)
+        pieceImageMap[1]["BISHOP"] = BitmapFactory.decodeResource(resources, R.drawable.black_bishop)
+        pieceImageMap[1]["ROOK"] = BitmapFactory.decodeResource(resources, R.drawable.black_rook)
+        pieceImageMap[1]["QUEEN"] = BitmapFactory.decodeResource(resources, R.drawable.black_queen)
+        pieceImageMap[1]["KING"] = BitmapFactory.decodeResource(resources, R.drawable.black_king)
+        
+        
         holder.addCallback(object : SurfaceHolder.Callback {
 
             @RequiresApi(Build.VERSION_CODES.N)
@@ -141,15 +156,14 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
 
 
             gameViewModel?.pieces?.forEach {
-                if (it.image != null) {
+                val team_index = (it.team < 0).toInt()
 
-                    canvas.drawBitmap(
-                        it.image!!,
-                        null,
-                        coordinateToRect(it.coordinate),
-                        null
-                    )
-                }
+                canvas.drawBitmap(
+                    pieceImageMap[team_index][it.name]!!,
+                    null,
+                    coordinateToRect(it.coordinate),
+                    null
+                )
             }
 
 
@@ -167,7 +181,7 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
         return Rect(left, top, right, bottom)
     }
 
-    private fun touchToCoordinate(x: Int, y: Int) : Coordinate? {
+    private fun touchToCoordinate(x: Int, y: Int) : Coordinate? { // Fix this, make Coordinate be null if outside a board
 
         return Coordinate((x - boardInfo.topLeftPoint.x) / boardInfo.tileSize , BOARD_TILES - 1 - (y - boardInfo.topLeftPoint.y) / boardInfo.tileSize)
     }
@@ -181,6 +195,14 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
     override fun onViewModelChange(viewModel: GameViewModel) {
         gameViewModel = viewModel
         drawBoard()
+    }
+
+    override fun onStalemate() {
+        AlertDialog.Builder(context).setMessage("STALEMATE").setCancelable(true).create().show()
+    }
+
+    override fun onCheckmate() {
+        AlertDialog.Builder(context).setMessage("CHECKMATE").setCancelable(true).create().show()
     }
 
 

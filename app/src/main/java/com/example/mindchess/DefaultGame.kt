@@ -4,6 +4,8 @@ import com.example.mindchess.audio_processing.Command
 import com.example.mindchess.audio_processing.MoveCommand
 import com.example.mindchess.audio_processing.SpecialCommand
 import com.example.mindchess.chess_mechanics.Piece
+import com.example.mindchess.common.CHECKMATE_CODE
+import com.example.mindchess.common.STALAMATE_CODE
 import com.example.mindchess.common.toInt
 
 class DefaultGame(private var board: Board) : Game {
@@ -17,7 +19,9 @@ class DefaultGame(private var board: Board) : Game {
 
 
 
-    override fun processTouch(coordinate: Coordinate) {
+    override fun processTouch(coordinate: Coordinate) : Int {
+
+        var game_result = 0
 
         if (selected_piece == null) {
             selected_piece = board.getPieceSetup(turn)[coordinate]
@@ -30,7 +34,12 @@ class DefaultGame(private var board: Board) : Game {
 
             if (board.playMove(turn, command)) {
                 turn = (turn == 0).toInt()
-                board.findLegalMoves(turn)
+                val any_legal_moves = board.findLegalMoves(turn)
+
+                if (!any_legal_moves) {
+                    game_result = if (board.isInCheck(turn)) CHECKMATE_CODE else STALAMATE_CODE
+                }
+
                 selected_piece = null
             } else {
                 selected_piece = board.getPieceSetup(turn)[coordinate]
@@ -39,19 +48,29 @@ class DefaultGame(private var board: Board) : Game {
 
         }
 
+        return game_result
+
     }
 
-    override fun processVoiceCommand(command: Command) {
+    override fun processVoiceCommand(command: Command) : Int {
+
+        var game_result = 0
 
         if (command is MoveCommand) {
             if (board.playMove(turn, command)) {
                 turn = (turn == 0).toInt()
-                board.findLegalMoves(turn)
+                val any_legal_moves = board.findLegalMoves(turn)
+
+                if (!any_legal_moves) {
+                    game_result = if (board.isInCheck(turn)) CHECKMATE_CODE else STALAMATE_CODE
+                }
             }
         } else if (command is SpecialCommand) {
             // Do something else
-            return
+            return game_result
         }
+
+        return game_result
     }
 
     override fun getCurrentBoard() : Board {

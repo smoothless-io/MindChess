@@ -1,19 +1,26 @@
 package com.example.mindchess.chess_mechanics
 
+import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.example.mindchess.Coordinate
+import com.example.mindchess.R
 import com.example.mindchess.common.toInt
 
 class Pawn(
     override val team: Int,
     override var coordinate: Coordinate,
-    override val image: Bitmap?,
+
     override var move_count: Int = 0,
     override val legal_moves: ArrayList<Coordinate> = arrayListOf()
 ) : Piece() {
 
     override val name = "PAWN"
     override val value = 1
+
+    // You left of here: https://stackoverflow.com/questions/2949259/android-access-drawables-outside-an-activity
+
 
     override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
         var yields_check = super.findPossibleMoves(piece_setup)
@@ -72,19 +79,23 @@ class Pawn(
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
         val team_index = (team < 0).toInt()
 
-        println("I dont wanna kill that mofcka")
+
         if (Math.abs(destination_coordinate.x - coordinate.x) == 1 && destination_coordinate.y == coordinate.y + team && piece_setup_mixed[destination_coordinate] == null) {
-            println("Well Im trying to kill that mofck")
             piece_setup[1 - team_index].remove(Coordinate(destination_coordinate.x, destination_coordinate.y - team))
         }
 
-
         super.move(piece_setup, destination_coordinate)
+
+        if (this.coordinate.y == 0 || this.coordinate.y == 7) {
+            piece_setup[team_index][this.coordinate] = Queen(this.team, this.coordinate)
+        }
+
+
 
     }
 
     override fun copy(): Piece {
-        return Pawn(this.team, this.coordinate, this.image, this.move_count, this.legal_moves)
+        return Pawn(this.team, this.coordinate, this.move_count, this.legal_moves)
     }
 
 }

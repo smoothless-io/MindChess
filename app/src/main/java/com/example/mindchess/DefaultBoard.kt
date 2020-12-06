@@ -15,7 +15,6 @@ class DefaultBoard(
         var piece: Piece? = null
 
 
-
         if (command.piece != null)
             piece = command.piece
         else if (command.origin_coordinate != null)
@@ -40,8 +39,10 @@ class DefaultBoard(
     }
 
 
-    override fun findLegalMoves(team: Int) {
 
+    override fun findLegalMoves(team: Int) : Boolean {
+
+        var any_legal_moves = false
 
         for (piece in piece_setup[team].values) {
 
@@ -65,7 +66,13 @@ class DefaultBoard(
             }
 
             piece.legal_moves.removeAll(illegal_moves)
+
+            if (piece.legal_moves.size > 0) {
+                any_legal_moves = true
+            }
         }
+
+        return any_legal_moves
 
     }
 

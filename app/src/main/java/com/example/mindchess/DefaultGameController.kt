@@ -5,13 +5,14 @@ import com.example.mindchess.audio_processing.Command
 import com.example.mindchess.audio_processing.MoveCommand
 import com.example.mindchess.audio_processing.SpecialCommand
 import com.example.mindchess.chess_mechanics.Piece
+import com.example.mindchess.common.CHECKMATE_CODE
+import com.example.mindchess.common.STALAMATE_CODE
 
 private const val LOG_TAG = "DefaultGameController"
 
 class DefaultGameController(
     private val game: Game
 ) : GameController {
-
 
 
     private var viewModel: GameViewModel = GameViewModel(
@@ -35,13 +36,26 @@ class DefaultGameController(
 
 
     override fun processTouch(coordinate: Coordinate) {
-        game.processTouch(coordinate)
+        val game_result = game.processTouch(coordinate)
+
         updateViewModel(game.getCurrentBoard().getPieces(), game.getSelectedCoordinate())
+        if (game_result == CHECKMATE_CODE) {
+            listeners.forEach { it.onCheckmate() }
+        } else if (game_result == STALAMATE_CODE) {
+            listeners.forEach { it.onStalemate() }
+        }
+
     }
 
     override fun processVoiceCommand(command: Command) {
-        game.processVoiceCommand(command)
+        val game_result = game.processVoiceCommand(command)
+
         updateViewModel(game.getCurrentBoard().getPieces(), game.getSelectedCoordinate())
+        if (game_result == CHECKMATE_CODE) {
+            listeners.forEach { it.onCheckmate() }
+        } else if (game_result == STALAMATE_CODE) {
+            listeners.forEach { it.onStalemate() }
+        }
     }
 
 }

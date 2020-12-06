@@ -7,5 +7,6 @@ data class MoveCommand(
     var piece: Piece? = null,
     var piece_name: String? = null,
     var origin_coordinate: Coordinate? = null,
+    var promote_to: String? = null,
     var destination_coordinate: Coordinate
 ) : Command

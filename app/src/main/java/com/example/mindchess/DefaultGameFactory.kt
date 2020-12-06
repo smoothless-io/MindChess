@@ -3,8 +3,6 @@ package com.example.mindchess
 import com.example.mindchess.chess_mechanics.Piece
 
 class DefaultGameFactory(
-    white_piece_image_provider: PieceImageProvider,
-    black_piece_image_provider: PieceImageProvider
 ) : GameFactory {
 
     override fun createNewGame(): Game {
@@ -19,15 +17,8 @@ class DefaultGameFactory(
 
     }
 
-    override val white_piece_factory: PieceFactory = DefaultPieceFactory(
-        1,
-        white_piece_image_provider
-    )
-
-    override val black_piece_factory: PieceFactory = DefaultPieceFactory(
-        -1,
-        black_piece_image_provider
-    )
+    override val white_piece_factory: PieceFactory = DefaultPieceFactory(1)
+    override val black_piece_factory: PieceFactory = DefaultPieceFactory(-1)
 
     private fun populatePieces(piece_setup: Array<MutableMap<Coordinate, Piece>>) {
         var coordinate: Coordinate?
