@@ -11,7 +11,7 @@ class DefaultGameFactory(
         populatePieces(piece_setup)
 
         return DefaultGame(
-            DefaultBoard(piece_setup)
+            DefaultBoard(piece_setup, null)
         )
 
 

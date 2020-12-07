@@ -16,9 +16,6 @@ abstract class Piece {
     abstract val value: Int
 
 
-    companion object {
-        var last_moved_piece: Piece? = null
-    }
 
     protected fun getPieceSetupMixed(piece_setup: Array<MutableMap<Coordinate, Piece>>) : MutableMap<Coordinate, Piece> {
         val piece_setup_mixed = mutableMapOf<Coordinate, Piece>()
@@ -29,7 +26,7 @@ abstract class Piece {
     }
 
 
-    open fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>) : Boolean {
+    open fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>, last_moved_piece: Piece?) : Boolean {
         legal_moves.clear()
         return false
     }
@@ -48,7 +45,7 @@ abstract class Piece {
 
         coordinate = destination_coordinate
         move_count += 1
-        last_moved_piece = this
+
     }
 
     abstract fun copy() : Piece

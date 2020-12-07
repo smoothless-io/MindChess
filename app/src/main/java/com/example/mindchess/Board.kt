@@ -13,4 +13,5 @@ interface Board {
     fun getPieces() : Collection<Piece>
     fun getPieceSetup(team: Int) : MutableMap<Coordinate, Piece>
     fun getPieceSetupCopy() : Array<MutableMap<Coordinate, Piece>>
+    fun getLastMovedPieceCopy() : Piece?
 }

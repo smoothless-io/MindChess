@@ -5,7 +5,8 @@ import com.example.mindchess.chess_mechanics.Piece
 import com.example.mindchess.common.toInt
 
 class DefaultBoard(
-    val piece_setup: Array<MutableMap<Coordinate, Piece>>
+    val piece_setup: Array<MutableMap<Coordinate, Piece>>,
+    var last_moved_piece: Piece?
 ) : Board {
 
 
@@ -30,6 +31,7 @@ class DefaultBoard(
 
         if (piece != null && piece.legal_moves.contains(command.destination_coordinate)) {
             piece.move(piece_setup, command.destination_coordinate)
+            last_moved_piece = piece
             move_played_successfully = true
         }
 
@@ -46,19 +48,20 @@ class DefaultBoard(
 
         for (piece in piece_setup[team].values) {
 
-            piece.findPossibleMoves(piece_setup)
+            piece.findPossibleMoves(piece_setup, last_moved_piece)
 
-            val piece_copy = piece.copy()
             val illegal_moves = arrayListOf<Coordinate>()
 
             for (coordinate in piece.legal_moves) {
                 val piece_setup_copy = getPieceSetupCopy()
+                val piece_copy = piece.copy()
 
 
                 piece_copy.move(piece_setup_copy, coordinate)
+                val last_moved_piece_copy = piece_copy
 
                 for (opposite_piece in piece_setup_copy[1 - team].values) {
-                    if (opposite_piece.findPossibleMoves(piece_setup_copy)) {
+                    if (opposite_piece.findPossibleMoves(piece_setup_copy, last_moved_piece_copy)) {
                         illegal_moves.add(coordinate)
                         break
                     }
@@ -78,7 +81,7 @@ class DefaultBoard(
 
     override fun isInCheck(team: Int) : Boolean {
         for (piece in piece_setup[1 - team].values) {
-            if (piece.findPossibleMoves(piece_setup)) {
+            if (piece.findPossibleMoves(piece_setup, last_moved_piece)) {
                 return true
             }
         }
@@ -93,7 +96,7 @@ class DefaultBoard(
         return piece_setup[team]
     }
 
-    override fun getPieces(): Collection<Piece> {
+    override fun getPieces() : Collection<Piece> {
         val pieces = arrayListOf<Piece>()
         for (team_pieces in piece_setup) {
             pieces.addAll(team_pieces.values)
@@ -101,16 +104,20 @@ class DefaultBoard(
         return pieces
     }
 
-    override fun getPieceSetupCopy(): Array<MutableMap<Coordinate, Piece>> {
+    override fun getPieceSetupCopy() : Array<MutableMap<Coordinate, Piece>> {
         val copy : Array<MutableMap<Coordinate, Piece>> = arrayOf(mutableMapOf(), mutableMapOf())
 
         for (team in 0..1) {
             for (piece in piece_setup[team]) {
-                copy[team][piece.key] = piece.value.copy()
+                copy[team][piece.key.copy()] = piece.value.copy()
             }
         }
 
         return copy
+    }
+
+    override fun getLastMovedPieceCopy() : Piece? {
+        return last_moved_piece?.copy()
     }
 
 }
