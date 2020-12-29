@@ -20,7 +20,10 @@ class King(
     override val name = "KING"
     override val value = 4
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>, last_moved_piece: Piece?) : Boolean {
+    override fun findPossibleMoves(
+        piece_setup: Array<MutableMap<Coordinate, Piece>>,
+        last_moved_piece: Piece?
+    ) : Boolean {
 
         var yields_check = super.findPossibleMoves(piece_setup, last_moved_piece)
 
@@ -43,7 +46,7 @@ class King(
         }
 
 
-        if (move_count == 0) {
+        if (move_count == 0) { // and not in check
             if (!piece_setup_mixed.keys.contains(Coordinate(coordinate.x + 1, coordinate.y)) &&
                 !piece_setup_mixed.keys.contains(Coordinate(coordinate.x + 2, coordinate.y)) &&
                 piece_setup_mixed[Coordinate(coordinate.x + 3, coordinate.y)] != null &&
@@ -74,11 +77,7 @@ class King(
 
         val team_index = (team < 0).toInt()
 
-        println("Coordinate: " + coordinate.toString())
-        println("Destination coordinate: " + destination_coordinate.toString())
-
         if (destination_coordinate.x == coordinate.x + 2) {
-            println("Im about to castle kingside")
             super.move(piece_setup, destination_coordinate)
 
             piece_setup[team_index][Coordinate(coordinate.x - 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x + 1, coordinate.y))!!
@@ -87,7 +86,6 @@ class King(
 
         } else if (destination_coordinate.x == coordinate.x - 2) {
 
-            println("Im about to caste queenside.")
             super.move(piece_setup, destination_coordinate)
             
             piece_setup[team_index][Coordinate(coordinate.x + 1, coordinate.y)] = piece_setup[team_index].remove(Coordinate(coordinate.x - 2, coordinate.y))!!

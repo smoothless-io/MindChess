@@ -34,6 +34,7 @@ class DefaultGame(private var board: Board) : Game {
 
             if (board.playMove(turn, command)) {
                 turn = (turn == 0).toInt()
+
                 val any_legal_moves = board.findLegalMoves(turn)
 
                 if (!any_legal_moves) {

@@ -5,9 +5,10 @@ import com.example.mindchess.chess_mechanics.Piece
 import com.example.mindchess.common.toInt
 
 class DefaultBoard(
-    val piece_setup: Array<MutableMap<Coordinate, Piece>>,
-    var last_moved_piece: Piece?
+    val piece_setup: Array<MutableMap<Coordinate, Piece>>
 ) : Board {
+
+    var last_moved_piece: Piece? = null
 
 
     override fun playMove(team: Int, command: MoveCommand) : Boolean {
@@ -32,6 +33,8 @@ class DefaultBoard(
         if (piece != null && piece.legal_moves.contains(command.destination_coordinate)) {
             piece.move(piece_setup, command.destination_coordinate)
             last_moved_piece = piece
+
+
             move_played_successfully = true
         }
 
@@ -49,10 +52,10 @@ class DefaultBoard(
         for (piece in piece_setup[team].values) {
 
             piece.findPossibleMoves(piece_setup, last_moved_piece)
-
             val illegal_moves = arrayListOf<Coordinate>()
 
             for (coordinate in piece.legal_moves) {
+
                 val piece_setup_copy = getPieceSetupCopy()
                 val piece_copy = piece.copy()
 
@@ -69,6 +72,30 @@ class DefaultBoard(
             }
 
             piece.legal_moves.removeAll(illegal_moves)
+
+
+            if (piece.name == "KING") {
+
+                var in_check = false
+
+                for (opposite_piece in piece_setup[1 - team].values) {
+                    if (opposite_piece.findPossibleMoves(piece_setup, last_moved_piece)) {
+                        in_check = true
+                        break
+                    }
+                }
+
+                for (i in arrayOf(-1, 1)) {
+                    if (piece.legal_moves.contains(Coordinate(piece.coordinate.x + i * 2, piece.coordinate.y))) {
+                        if (in_check || !piece.legal_moves.contains(Coordinate(piece.coordinate.x + i, piece.coordinate.y))) {
+                            piece.legal_moves.remove(Coordinate(piece.coordinate.x + i * 2, piece.coordinate.y))
+                        }
+                    }
+                }
+            }
+
+
+
 
             if (piece.legal_moves.size > 0) {
                 any_legal_moves = true

@@ -21,7 +21,10 @@ class Knight(
     override val value = 3
 
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>, last_moved_piece: Piece?) : Boolean {
+    override fun findPossibleMoves(
+        piece_setup: Array<MutableMap<Coordinate, Piece>>,
+        last_moved_piece: Piece?
+    ): Boolean {
         var yields_check = super.findPossibleMoves(piece_setup, last_moved_piece)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)

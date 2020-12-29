@@ -22,7 +22,10 @@ class Pawn(
     // You left of here: https://stackoverflow.com/questions/2949259/android-access-drawables-outside-an-activity
 
 
-    override fun findPossibleMoves(piece_setup: Array<MutableMap<Coordinate, Piece>>, last_moved_piece: Piece?) : Boolean {
+    override fun findPossibleMoves(
+        piece_setup: Array<MutableMap<Coordinate, Piece>>,
+        last_moved_piece: Piece?
+    ): Boolean {
         var yields_check = super.findPossibleMoves(piece_setup, last_moved_piece)
 
         val piece_setup_mixed = getPieceSetupMixed(piece_setup)
