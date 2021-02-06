@@ -10,6 +10,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.Navigation
 
 import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.io.android.AndroidAudioPlayer
@@ -21,8 +25,10 @@ private const val LOG_TAG = "AudioTest"
 
 class ChessActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: GameViewModel
     private var gameController: DefaultGameController? = null
     private var gameFactory: GameFactory? = null
+
 
 
     private val dangerousPermissions = arrayOf(
