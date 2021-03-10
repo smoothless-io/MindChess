@@ -41,7 +41,7 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
         keyword_pools["PIECE_NAMES"] = KeywordPool(listOf<String>("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, 0)
         keyword_pools["FILES"] = KeywordPool(listOf<String>("A", "B", "C", "D", "E", "F", "G", "H"), false, 1)
         keyword_pools["RANKS"] = KeywordPool(listOf<String>("1", "2", "3", "4", "5", "6", "7", "8"), false, 2)
-        keyword_pools["SPECIAL_WORDS"] = KeywordPool(listOf<String>("RESIGN", "CLOCK", "FROM", "UNDO", "WHAT", "CAN", "JAKUB", "EAT"), true, 3)
+        keyword_pools["SPECIAL_WORDS"] = KeywordPool(listOf<String>("RESIGN", "CLOCK", "FROM", "UNDO"), true, 3)
 
         cfi = CommandFormingInfo(arrayListOf(), false, arrayListOf(), false)
     }
@@ -50,7 +50,6 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
     fun extractSifs(buffer: FloatArray) : List<FloatArray> {
         val sifs = mutableListOf<FloatArray>()
 
-        sifs.add(buffer.sliceArray(100..200))
         sifs.add(buffer.sliceArray(100..200))
 
 
