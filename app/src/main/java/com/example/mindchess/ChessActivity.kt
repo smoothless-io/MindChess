@@ -82,7 +82,7 @@ class ChessActivity : AppCompatActivity() {
 
         val audioPlayer = AndroidAudioPlayer(TarsosDSPAudioFormat(sampleRate.toFloat(), 16, 1, false, false), bufferSize, AudioManager.STREAM_MUSIC)
 
-        val sifAnalyzer = SifAnalyzer(KeywordSpottingService(), object : OnCommandFormed {
+        val sifAnalyzer = SifAnalyzer(KeywordSpottingService(applicationContext), object : OnCommandFormed {
 
             override fun handleCommand(command: Command) {
                 gameController?.processVoiceCommand(command)
