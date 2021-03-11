@@ -57,22 +57,15 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
         holder.addCallback(object : SurfaceHolder.Callback {
 
             @RequiresApi(Build.VERSION_CODES.N)
-            override fun surfaceCreated(holder: SurfaceHolder?) {
+            override fun surfaceCreated(p0: SurfaceHolder) {
                 boardInfo = getBoardInfo()
                 drawBoard()
-
-
             }
 
-            override fun surfaceChanged(
-                holder: SurfaceHolder?,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
+            override fun surfaceChanged(p0: SurfaceHolder, format: Int, width: Int, height: Int) {
             }
 
-            override fun surfaceDestroyed(holder: SurfaceHolder?) {
+            override fun surfaceDestroyed(p0: SurfaceHolder) {
             }
 
         }

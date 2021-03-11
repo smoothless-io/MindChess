@@ -1,24 +1,22 @@
 package com.example.mindchess
 
 import android.Manifest
-import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
-import androidx.navigation.Navigation
-
 import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.io.android.AndroidAudioPlayer
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
 import com.example.mindchess.audio_processing.*
+import org.tensorflow.lite.Interpreter
+import java.io.File
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 
 private const val LOG_TAG = "AudioTest"
 
@@ -35,6 +33,15 @@ class ChessActivity : AppCompatActivity() {
         Manifest.permission.RECORD_AUDIO
     )
 
+    var f_input_stream: FileInputStream = FileInputStream(File("model.tflite"))
+    var f_channel: FileChannel = f_input_stream.getChannel()
+    var tflite_model: MappedByteBuffer = f_channel.map(FileChannel.MapMode.READ_ONLY, 0, f_channel.size())
+
+    private val interpreter = Interpreter(tflite_model)
+    //private val interpreter = Interpreter(FileInputStream(File("src/main/ml/model.tflite")))
+
+    // private val model = Model.newInstance(applicationContext)
+
     private var sampleRate = 22050
     private var bufferSize = 22050
     private var bufferOverlap = 0
@@ -47,8 +54,7 @@ class ChessActivity : AppCompatActivity() {
         val chessView = ChessGameView(this)
         setContentView(chessView)
 
-        val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-                result ->
+        val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             Log.v(LOG_TAG, "> requestPermissionLauncher - ${result.values}")
             if (result.values.all { it }) {
                 Log.v(LOG_TAG, "All permissions granted.")
@@ -78,14 +84,28 @@ class ChessActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun startRecording() {
-        val audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, bufferOverlap)
+        val audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(
+            sampleRate,
+            bufferSize,
+            bufferOverlap
+        )
 
-        val audioPlayer = AndroidAudioPlayer(TarsosDSPAudioFormat(sampleRate.toFloat(), 16, 1, false, false), bufferSize, AudioManager.STREAM_MUSIC)
+        val audioPlayer = AndroidAudioPlayer(
+            TarsosDSPAudioFormat(
+                sampleRate.toFloat(),
+                16,
+                1,
+                false,
+                false
+            ), bufferSize, AudioManager.STREAM_MUSIC
+        )
 
-        val sifAnalyzer = SifAnalyzer(KeywordSpottingService(applicationContext), object : OnCommandFormed {
+        val sifAnalyzer = SifAnalyzer(
+            KeywordSpottingService(interpreter),
+            object : OnCommandFormed {
 
-            override fun handleCommand(command: Command) {
-                gameController?.processVoiceCommand(command)
+                override fun handleCommand(command: Command) {
+                    gameController?.processVoiceCommand(command)
 
 //                if (command is MoveCommand) {
 //                    Log.v(LOG_TAG, "MOVE COMMAND " + command.piece_name + " " + command.origin_coordinate.toString() + " " + command.destination_coordinate.toString())
@@ -96,9 +116,9 @@ class ChessActivity : AppCompatActivity() {
 //                }
 
 
-            }
+                }
 
-        })
+            })
 
 
         //audioDispatcher.addAudioProcessor(audioPlayer)
@@ -110,6 +130,11 @@ class ChessActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        interpreter.close()
     }
 
 }

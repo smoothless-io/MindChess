@@ -4,6 +4,7 @@ import android.util.Log
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
 import com.example.mindchess.Coordinate
+import java.nio.ByteBuffer
 
 
 private const val LOG_TAG = "SifExtractorTest"
@@ -61,7 +62,9 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
         val sifs = extractSifs(audioEvent!!.floatBuffer)
 
         for (sif in sifs) {
-            val keyword = kss.predict(sif, keyword_pools.values)
+
+            val mfcc = ByteBuffer.allocate(44*13)
+            val keyword = kss.predict(mfcc, keyword_pools.values)
 
             if (keyword.length > 0) {
                 val command = formCommand(keyword)
