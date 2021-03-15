@@ -12,6 +12,7 @@ import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.io.android.AndroidAudioPlayer
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
 import com.example.mindchess.audio_processing.*
+import com.example.mindchess.ml.DigitClassifier
 import org.tensorflow.lite.Interpreter
 import java.io.File
 import java.io.FileInputStream
@@ -27,20 +28,20 @@ class ChessActivity : AppCompatActivity() {
     private var gameController: DefaultGameController? = null
     private var gameFactory: GameFactory? = null
 
-
-
     private val dangerousPermissions = arrayOf(
         Manifest.permission.RECORD_AUDIO
     )
 
-    var f_input_stream: FileInputStream = FileInputStream(File("model.tflite"))
-    var f_channel: FileChannel = f_input_stream.getChannel()
-    var tflite_model: MappedByteBuffer = f_channel.map(FileChannel.MapMode.READ_ONLY, 0, f_channel.size())
+//    var f_input_stream: FileInputStream = FileInputStream(File("src/main/ml/DigitClassifier.tflite"))
+//    var f_channel: FileChannel = f_input_stream.getChannel()
+//    var tflite_model: MappedByteBuffer = f_channel.map(FileChannel.MapMode.READ_ONLY, 0, f_channel.size())
 
-    private val interpreter = Interpreter(tflite_model)
-    //private val interpreter = Interpreter(FileInputStream(File("src/main/ml/model.tflite")))
+//    private val interpreter = Interpreter(tflite_model)
+    //private val interpreter = Interpreter(FileInputStream(File("src/main/ml/DigitClassifier.tflite")))
 
-    // private val model = Model.newInstance(applicationContext)
+    private val digit_classifier by lazy {
+        DigitClassifier.newInstance(this)
+    }
 
     private var sampleRate = 22050
     private var bufferSize = 22050
@@ -79,9 +80,6 @@ class ChessActivity : AppCompatActivity() {
 
     }
 
-
-
-
     @RequiresApi(Build.VERSION_CODES.M)
     private fun startRecording() {
         val audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(
@@ -101,7 +99,7 @@ class ChessActivity : AppCompatActivity() {
         )
 
         val sifAnalyzer = SifAnalyzer(
-            KeywordSpottingService(interpreter),
+            KeywordSpottingService(digit_classifier),
             object : OnCommandFormed {
 
                 override fun handleCommand(command: Command) {
@@ -134,7 +132,7 @@ class ChessActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        interpreter.close()
+        digit_classifier.close()
     }
 
 }
