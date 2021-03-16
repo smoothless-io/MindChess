@@ -20,17 +20,19 @@ class KeywordSpottingService(private val digitClassifier: DigitClassifier) {
 
     fun predict(buffer: ByteBuffer, keyword_pools: Collection<KeywordPool>) : String {
 
-        // Creates inputs for reference.
+
         val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 44, 13, 1), DataType.FLOAT32)
         // inputFeature0.loadBuffer(buffer)
 
-        // Runs model inference and gets result.
-        val outputs = digitClassifier.process(inputFeature0)
-        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-        Log.v(LOG_TAG, "Stuff.")
+        val outputs = digitClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
+        val digit = outputs.floatArray.indices.maxBy { outputs.floatArray[it] } ?: -1
 
-        count += 1
-        return if (count < moves.size) moves[count] else ""
+        Log.v(LOG_TAG, "New Sif:")
+        Log.v(LOG_TAG, digit.toString())
+        for (i in outputs.floatArray) {
+            Log.v(LOG_TAG, i.toString())
+        }
+
 
 //        for (pool in keyword_pools) {
 //            if (pool.active) {
@@ -38,6 +40,8 @@ class KeywordSpottingService(private val digitClassifier: DigitClassifier) {
 //                return "KNIGHT"
 //            }
 //        }
+
+        return ""
 
 
     }
