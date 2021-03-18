@@ -39,10 +39,10 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
         )
 
 
-        keyword_pools["PIECE_NAMES"] = KeywordPool(listOf<String>("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, 0)
-        keyword_pools["FILES"] = KeywordPool(listOf<String>("A", "B", "C", "D", "E", "F", "G", "H"), false, 1)
-        keyword_pools["RANKS"] = KeywordPool(listOf<String>("1", "2", "3", "4", "5", "6", "7", "8"), false, 2)
-        keyword_pools["SPECIAL_WORDS"] = KeywordPool(listOf<String>("RESIGN", "CLOCK", "FROM", "UNDO"), true, 3)
+        keyword_pools["PIECE_NAMES"] = KeywordPool(listOf<String>("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, "PIECE_NAME_CLASSIFIER")
+        keyword_pools["FILES"] = KeywordPool(listOf<String>("A", "B", "C", "D", "E", "F", "G", "H"), false, "FILE_CLASSIFIER")
+        keyword_pools["RANKS"] = KeywordPool(listOf<String>("1", "2", "3", "4", "5", "6", "7", "8"), false, "RANK_CLASSIFIER")
+        keyword_pools["SPECIAL_WORDS"] = KeywordPool(listOf<String>("RESIGN", "CLOCK", "FROM", "UNDO"), true, "SPECIAL_WORD_")
 
         cfi = CommandFormingInfo(arrayListOf(), false, arrayListOf(), false)
     }
@@ -64,7 +64,10 @@ class SifAnalyzer(var kss: KeywordSpottingService, var handler: OnCommandFormed)
         for (sif in sifs) {
 
             val mfcc = ByteBuffer.allocate(44*13)
-            val keyword = kss.predict(mfcc, keyword_pools.values)
+            val predictions = kss.predict(mfcc, keyword_pools.values)
+
+            // For now just take the first prediction
+            val keyword = if (predictions.size > 0) predictions[0].first else ""
 
             if (keyword.length > 0) {
                 val command = formCommand(keyword)

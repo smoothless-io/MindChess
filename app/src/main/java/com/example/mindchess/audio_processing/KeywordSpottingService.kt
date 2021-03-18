@@ -1,48 +1,46 @@
 package com.example.mindchess.audio_processing
 
-import android.content.Context
-import android.graphics.ColorSpace
-import android.util.Log
-import com.example.mindchess.ml.DigitClassifier
+import com.example.mindchess.ml.FileClassifier
+import com.example.mindchess.ml.RankClassifier
 import org.tensorflow.lite.DataType
-import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
 
 private var LOG_TAG = "KeywordSpottingService"
 
-class KeywordSpottingService(private val digitClassifier: DigitClassifier) {
-
-    // private var moves = arrayOf("PAWN", "D", "4", "PAWN", "D", "5", "BISHOP", "F", "4", "KNIGHT", "F", "6", "PAWN", "E", "3", "PAWN", "E", "6", "KNIGHT", "D", "2", "PAWN", "C", "5", "PAWN", "C", "3")
-    private var moves = arrayOf("")
-    private var count = -1
-
-
-    fun predict(buffer: ByteBuffer, keyword_pools: Collection<KeywordPool>) : String {
+class KeywordSpottingService(
+    private val rankClassifier: RankClassifier,
+    private val fileClassifier: FileClassifier,
+    private val pieceNameClassifier: RankClassifier,
+    private val specialWordClassifier: FileClassifier
+) {
 
 
-        val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 44, 13, 1), DataType.FLOAT32)
-        // inputFeature0.loadBuffer(buffer)
+    fun predict(buffer: ByteBuffer, keyword_pools: Collection<KeywordPool>) : ArrayList<Pair<String, Float>> {
 
-        val outputs = digitClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
-        val digit = outputs.floatArray.indices.maxBy { outputs.floatArray[it] } ?: -1
+        val predictions = arrayListOf<Pair<String, Float>>()
 
-        Log.v(LOG_TAG, "New Sif:")
-        Log.v(LOG_TAG, digit.toString())
-        for (i in outputs.floatArray) {
-            Log.v(LOG_TAG, i.toString())
+        for (pool in keyword_pools) {
+            if (pool.active) {
+
+                val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 44, 13, 1), DataType.FLOAT32)
+                inputFeature0.loadBuffer(buffer)
+
+                var outputs = TensorBuffer.createDynamic(DataType.FLOAT32)
+                when (pool.model_id) {
+                    "RANK_CLASSIFIER" -> outputs = rankClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
+                    "FILE_CLASSIFIER" -> outputs = fileClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
+                    "PIECE_NAME_CLASSIFIER" -> outputs = pieceNameClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
+                    "SPECIAL_WORD_CLASSIFIER" -> outputs = specialWordClassifier.process(inputFeature0).outputFeature0AsTensorBuffer
+                }
+
+                val index = outputs.floatArray.indices.maxBy { outputs.floatArray[it] } ?: -1
+                predictions.add(Pair(pool.keywords[index], outputs.floatArray[index]))
+
+            }
         }
 
-
-//        for (pool in keyword_pools) {
-//            if (pool.active) {
-//                //model[pool.model_id].predict()
-//                return "KNIGHT"
-//            }
-//        }
-
-        return ""
-
+        return predictions
 
     }
 

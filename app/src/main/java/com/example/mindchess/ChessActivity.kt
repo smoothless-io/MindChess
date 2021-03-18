@@ -12,13 +12,8 @@ import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.io.android.AndroidAudioPlayer
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
 import com.example.mindchess.audio_processing.*
-import com.example.mindchess.ml.DigitClassifier
-import org.tensorflow.lite.Interpreter
-import java.io.File
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
-
+import com.example.mindchess.ml.FileClassifier
+import com.example.mindchess.ml.RankClassifier
 private const val LOG_TAG = "AudioTest"
 
 
@@ -32,16 +27,21 @@ class ChessActivity : AppCompatActivity() {
         Manifest.permission.RECORD_AUDIO
     )
 
-//    var f_input_stream: FileInputStream = FileInputStream(File("src/main/ml/DigitClassifier.tflite"))
-//    var f_channel: FileChannel = f_input_stream.getChannel()
-//    var tflite_model: MappedByteBuffer = f_channel.map(FileChannel.MapMode.READ_ONLY, 0, f_channel.size())
 
-//    private val interpreter = Interpreter(tflite_model)
-    //private val interpreter = Interpreter(FileInputStream(File("src/main/ml/DigitClassifier.tflite")))
-
-    private val digit_classifier by lazy {
-        DigitClassifier.newInstance(this)
+    private val rankClassifier by lazy {
+        RankClassifier.newInstance(this)
     }
+    private val fileClassifier by lazy {
+        FileClassifier.newInstance(this)
+    }
+    private val pieceNameClassifier by lazy {
+        RankClassifier.newInstance(this)
+    }
+    private val specialWordClassifier by lazy {
+        FileClassifier.newInstance(this)
+    }
+
+
 
     private var sampleRate = 22050
     private var bufferSize = 22050
@@ -99,7 +99,7 @@ class ChessActivity : AppCompatActivity() {
         )
 
         val sifAnalyzer = SifAnalyzer(
-            KeywordSpottingService(digit_classifier),
+            KeywordSpottingService(rankClassifier, fileClassifier, pieceNameClassifier, specialWordClassifier),
             object : OnCommandFormed {
 
                 override fun handleCommand(command: Command) {
@@ -132,7 +132,11 @@ class ChessActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        digit_classifier.close()
+
+        rankClassifier.close()
+        fileClassifier.close()
+        pieceNameClassifier.close()
+        specialWordClassifier.close()
     }
 
 }
