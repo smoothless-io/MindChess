@@ -28,25 +28,29 @@ class ChessActivity : AppCompatActivity() {
     )
 
 
+
+
     private val rankClassifier by lazy {
         RankClassifier.newInstance(this)
     }
+
     private val fileClassifier by lazy {
         FileClassifier.newInstance(this)
     }
+
     private val pieceNameClassifier by lazy {
         RankClassifier.newInstance(this)
     }
+
     private val specialWordClassifier by lazy {
         FileClassifier.newInstance(this)
     }
 
-
-
-    private var sampleRate = 22050
-    private var bufferSize = 22050
-    private var bufferOverlap = 0
-
+    private var audioInfo = AudioInfo(
+        sampleRate = 22050,
+        bufferSize = 22050,
+        bufferOverlap = 0
+    )
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,37 +87,28 @@ class ChessActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     private fun startRecording() {
         val audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(
-            sampleRate,
-            bufferSize,
-            bufferOverlap
+            audioInfo.sampleRate,
+            audioInfo.bufferSize,
+            audioInfo.bufferOverlap
         )
 
         val audioPlayer = AndroidAudioPlayer(
             TarsosDSPAudioFormat(
-                sampleRate.toFloat(),
+                audioInfo.sampleRate.toFloat(),
                 16,
                 1,
                 false,
                 false
-            ), bufferSize, AudioManager.STREAM_MUSIC
+            ), audioInfo.bufferSize, AudioManager.STREAM_MUSIC
         )
 
         val sifAnalyzer = SifAnalyzer(
-            KeywordSpottingService(rankClassifier, fileClassifier, pieceNameClassifier, specialWordClassifier),
-            object : OnCommandFormed {
+            audioInfo = audioInfo,
+            kss = KeywordSpottingService(rankClassifier, fileClassifier, pieceNameClassifier, specialWordClassifier),
+            handler = object : OnCommandFormed {
 
                 override fun handleCommand(command: Command) {
                     gameController?.processVoiceCommand(command)
-
-//                if (command is MoveCommand) {
-//                    Log.v(LOG_TAG, "MOVE COMMAND " + command.piece_name + " " + command.origin_coordinate.toString() + " " + command.destination_coordinate.toString())
-//                    gameController?.processMoveCommand(command)
-//                } else if (command is SpecialCommand) {
-//                    Log.v(LOG_TAG, "SPECIAL COMMAND")
-//                    gameController?.processSpecialCommand(command)
-//                }
-
-
                 }
 
             })
