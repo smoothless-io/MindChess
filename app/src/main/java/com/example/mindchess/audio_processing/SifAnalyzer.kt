@@ -6,6 +6,8 @@ import be.tarsos.dsp.AudioProcessor
 import be.tarsos.dsp.mfcc.MFCC
 import com.example.mindchess.Coordinate
 import java.nio.ByteBuffer
+import java.nio.FloatBuffer
+import kotlin.reflect.typeOf
 
 
 private const val LOG_TAG = "SifExtractorTest"
@@ -53,22 +55,42 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
         return sifs
     }
 
+    fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
+
+        //TODO Given the original audioEvent and sif range, generate a new audioEvent, with the sif centered, rest zeros.
+
+        val correctedAudioEvent = audioEvent
+
+        val buffer = FloatArray(audioEvent.floatBuffer.size)
+
+        Log.v(LOG_TAG, "Float buffeeeer: %f".format(audioEvent.floatBuffer.get(500)))
+        Log.v(LOG_TAG, "Float buffeeeer: %f".format(audioEvent.floatBuffer.get(500)))
+
+        correctedAudioEvent.floatBuffer = buffer
+        Log.v(LOG_TAG, "Corrected float buffeeeer: %f".format(correctedAudioEvent.floatBuffer.get(500)))
+
+        return correctedAudioEvent
+
+
+    }
+
     override fun process(audioEvent: AudioEvent?): Boolean {
 
 
         val sifs = extractSifs(audioEvent!!.floatBuffer)
 
 
-
-
         for (sif in sifs) {
 
-            Log.v(LOG_TAG, sif.size.toString())
+            val generatedAudioEvent = generateAudioEvent(audioEvent, 50, 100)
 
 
-            val mfcc = MFCC(sif.size, audioInfo.sampleRate.toFloat(), 44, 13, 300f, 3000f).process(audioEvent)
 
-            Log.v(LOG_TAG, mfcc.toString())
+
+            val mfcc_extractor = MFCC(audioEvent.floatBuffer.size, audioInfo.sampleRate.toFloat(), 44, 13, 300f, 3000f)
+            mfcc_extractor.process(generatedAudioEvent)
+
+            Log.v(LOG_TAG, "Eeh so this is mfcc: %s".format(mfcc_extractor.mfcc.get(0)))
 //
 //
 //            val mfcc_buffer = ByteBuffer.allocate(44 * 13)
