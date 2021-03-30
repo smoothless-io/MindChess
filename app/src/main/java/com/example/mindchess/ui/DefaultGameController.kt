@@ -1,9 +1,6 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
-import android.util.Log
 import com.example.mindchess.audio_processing.Command
-import com.example.mindchess.audio_processing.MoveCommand
-import com.example.mindchess.audio_processing.SpecialCommand
 import com.example.mindchess.chess_mechanics.Piece
 import com.example.mindchess.common.CHECKMATE_CODE
 import com.example.mindchess.common.STALAMATE_CODE

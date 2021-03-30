@@ -1,19 +1,17 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.*
 import android.os.Build
-import android.util.Log
-import android.view.Display
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.annotation.RequiresApi
+import com.example.mindchess.R
 import com.example.mindchess.common.*
-import com.example.mindchess.common.toInt
+import com.example.mindchess.extensions.toInt
 import java.lang.Integer.min
-import java.lang.Math.max
 
 
 private val LOG_TAG = "ChessGameViewTest"
@@ -40,15 +38,23 @@ class ChessGameView(context: Context) : SurfaceView(context), GameEventListener 
     init {
         
         pieceImageMap[0]["PAWN"] = BitmapFactory.decodeResource(resources, R.drawable.white_pawn)
-        pieceImageMap[0]["KNIGHT"] = BitmapFactory.decodeResource(resources, R.drawable.white_knight)
-        pieceImageMap[0]["BISHOP"] = BitmapFactory.decodeResource(resources, R.drawable.white_bishop)
+        pieceImageMap[0]["KNIGHT"] = BitmapFactory.decodeResource(resources,
+            R.drawable.white_knight
+        )
+        pieceImageMap[0]["BISHOP"] = BitmapFactory.decodeResource(resources,
+            R.drawable.white_bishop
+        )
         pieceImageMap[0]["ROOK"] = BitmapFactory.decodeResource(resources, R.drawable.white_rook)
         pieceImageMap[0]["QUEEN"] = BitmapFactory.decodeResource(resources, R.drawable.white_queen)
         pieceImageMap[0]["KING"] = BitmapFactory.decodeResource(resources, R.drawable.white_king)
 
         pieceImageMap[1]["PAWN"] = BitmapFactory.decodeResource(resources, R.drawable.black_pawn)
-        pieceImageMap[1]["KNIGHT"] = BitmapFactory.decodeResource(resources, R.drawable.black_knight)
-        pieceImageMap[1]["BISHOP"] = BitmapFactory.decodeResource(resources, R.drawable.black_bishop)
+        pieceImageMap[1]["KNIGHT"] = BitmapFactory.decodeResource(resources,
+            R.drawable.black_knight
+        )
+        pieceImageMap[1]["BISHOP"] = BitmapFactory.decodeResource(resources,
+            R.drawable.black_bishop
+        )
         pieceImageMap[1]["ROOK"] = BitmapFactory.decodeResource(resources, R.drawable.black_rook)
         pieceImageMap[1]["QUEEN"] = BitmapFactory.decodeResource(resources, R.drawable.black_queen)
         pieceImageMap[1]["KING"] = BitmapFactory.decodeResource(resources, R.drawable.black_king)

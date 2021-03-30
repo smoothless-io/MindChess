@@ -1,7 +1,5 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.mindchess.chess_mechanics.Piece
 
 data class GameViewModel(

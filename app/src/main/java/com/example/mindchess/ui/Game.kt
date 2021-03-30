@@ -1,4 +1,4 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 import com.example.mindchess.audio_processing.Command
 import com.example.mindchess.chess_mechanics.Piece

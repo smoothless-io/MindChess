@@ -1,7 +1,6 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 import com.example.mindchess.chess_mechanics.*
-import com.example.mindchess.chess_mechanics.Piece
 
 class DefaultPieceFactory(
     private val team: Int

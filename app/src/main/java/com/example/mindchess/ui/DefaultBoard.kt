@@ -1,8 +1,7 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 import com.example.mindchess.audio_processing.MoveCommand
 import com.example.mindchess.chess_mechanics.Piece
-import com.example.mindchess.common.toInt
 
 class DefaultBoard(
     val piece_setup: Array<MutableMap<Coordinate, Piece>>

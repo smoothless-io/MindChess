@@ -1,4 +1,4 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 import com.example.mindchess.common.BOARD_TILES
 

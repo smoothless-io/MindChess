@@ -1,4 +1,4 @@
-package com.example.mindchess
+package com.example.mindchess.ui
 
 interface ChessGameViewListener {
 
