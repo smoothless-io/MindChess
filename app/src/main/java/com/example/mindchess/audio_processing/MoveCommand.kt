@@ -1,6 +1,6 @@
 package com.example.mindchess.audio_processing
 
-import com.example.mindchess.Coordinate
+import com.example.mindchess.ui.Coordinate
 import com.example.mindchess.chess_mechanics.Piece
 
 data class MoveCommand(

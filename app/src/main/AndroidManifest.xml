@@ -17,11 +17,11 @@
         android:theme="@style/AppTheme">
         
         <activity
-            android:name=".ChessActivity"
+            android:name=".ui.ChessActivity"
             android:label="@string/title_activity_chess"
             android:theme="@style/AppTheme.NoActionBar"></activity>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

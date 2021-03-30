@@ -1,12 +1,7 @@
 package com.example.mindchess.chess_mechanics
 
-import android.content.pm.PackageManager
-import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import com.example.mindchess.Coordinate
-import com.example.mindchess.R
-import com.example.mindchess.common.toInt
+import com.example.mindchess.ui.Coordinate
+import com.example.mindchess.extensions.toInt
 
 class Pawn(
     override val team: Int,

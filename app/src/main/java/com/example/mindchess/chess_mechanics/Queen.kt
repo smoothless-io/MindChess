@@ -1,12 +1,8 @@
 package com.example.mindchess.chess_mechanics
 
-import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import com.example.mindchess.Coordinate
-import com.example.mindchess.R
-import com.example.mindchess.isOnBoard
-import com.example.mindchess.move
+import com.example.mindchess.ui.Coordinate
+import com.example.mindchess.ui.isOnBoard
+import com.example.mindchess.ui.move
 
 class Queen(
     override val team: Int,

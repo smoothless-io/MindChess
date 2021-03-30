@@ -3,11 +3,9 @@ package com.example.mindchess.audio_processing
 import android.util.Log
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
+import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.mfcc.MFCC
-import com.example.mindchess.Coordinate
-import java.nio.ByteBuffer
-import java.nio.FloatBuffer
-import kotlin.reflect.typeOf
+import com.example.mindchess.ui.Coordinate
 
 
 private const val LOG_TAG = "SifExtractorTest"
@@ -44,30 +42,27 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     }
 
 
-    fun extractSifs(buffer: FloatArray) : List<FloatArray> {
-        val sifs = mutableListOf<FloatArray>()
+    private fun extractSifRanges(buffer: FloatArray) : ArrayList<Pair<Int, Int>> {
+        val sifRanges = ArrayList<Pair<Int, Int>>()
 
-        if (buffer.size > 10000) {
-            sifs.add(buffer.sliceArray(0..buffer.size - 1))
-        }
+        //TODO Implement the logic prototyped in python here
 
-
-        return sifs
+        sifRanges.add(Pair(0, buffer.size - 1))
+        return sifRanges
     }
 
-    fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
+
+    private fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
 
         //TODO Given the original audioEvent and sif range, generate a new audioEvent, with the sif centered, rest zeros.
 
-        val correctedAudioEvent = audioEvent
+        val correctedAudioEvent = AudioEvent(TarsosDSPAudioFormat(0.0f, 0, 0, false, false))
 
-        val buffer = FloatArray(audioEvent.floatBuffer.size)
+        correctedAudioEvent.floatBuffer = FloatArray(audioEvent.floatBuffer.size)
 
-        Log.v(LOG_TAG, "Float buffeeeer: %f".format(audioEvent.floatBuffer.get(500)))
-        Log.v(LOG_TAG, "Float buffeeeer: %f".format(audioEvent.floatBuffer.get(500)))
+        Log.i(LOG_TAG, "New float buffer size: %s".format(correctedAudioEvent.floatBuffer.size.toString()))
 
-        correctedAudioEvent.floatBuffer = buffer
-        Log.v(LOG_TAG, "Corrected float buffeeeer: %f".format(correctedAudioEvent.floatBuffer.get(500)))
+
 
         return correctedAudioEvent
 
@@ -77,15 +72,12 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     override fun process(audioEvent: AudioEvent?): Boolean {
 
 
-        val sifs = extractSifs(audioEvent!!.floatBuffer)
+        val sifRanges = extractSifRanges(audioEvent!!.floatBuffer)
 
 
-        for (sif in sifs) {
+        for (sifRange in sifRanges) {
 
-            val generatedAudioEvent = generateAudioEvent(audioEvent, 50, 100)
-
-
-
+            val generatedAudioEvent = generateAudioEvent(audioEvent, sifRange.first, sifRange.second)
 
             val mfcc_extractor = MFCC(audioEvent.floatBuffer.size, audioInfo.sampleRate.toFloat(), 44, 13, 300f, 3000f)
             mfcc_extractor.process(generatedAudioEvent)

@@ -1,8 +1,7 @@
 package com.example.mindchess.chess_mechanics
 
-import android.graphics.Bitmap
-import com.example.mindchess.Coordinate
-import com.example.mindchess.common.toInt
+import com.example.mindchess.ui.Coordinate
+import com.example.mindchess.extensions.toInt
 
 abstract class Piece {
 
