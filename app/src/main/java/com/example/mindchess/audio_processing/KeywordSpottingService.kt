@@ -16,11 +16,11 @@ class KeywordSpottingService(
 ) {
 
 
-    fun predict(buffer: ByteBuffer, keyword_pools: Collection<KeywordPool>) : ArrayList<Pair<String, Float>> {
+    fun predict(buffer: ByteBuffer, keywordPools: Collection<KeywordPool>) : ArrayList<Pair<String, Float>> {
 
         val predictions = arrayListOf<Pair<String, Float>>()
 
-        for (pool in keyword_pools) {
+        for (pool in keywordPools) {
             if (pool.active) {
 
                 val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 44, 13, 1), DataType.FLOAT32)

@@ -15,7 +15,7 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     // SIF stands for silence-isolated frame.
     private var sif_buffer: ArrayList<String> = arrayListOf() // Or other way of remembering the last part of the last sif.
 
-    private var special_commands: Array<SpecialCommand> = arrayOf(
+    private var specialCommands: Array<SpecialCommand> = arrayOf(
         SpecialCommand(arrayListOf("RESIGN")),
         SpecialCommand(arrayListOf("CLOCK")),
         SpecialCommand(arrayListOf("UNDO")),
@@ -23,70 +23,70 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     )
 
     private data class CommandFormingInfo(
-        var move_command_raw: ArrayList<String>,
-        var move_command_form_long: Boolean,
-        var special_command_raw: ArrayList<String>,
-        var special_command_possible: Boolean
+        var moveCommandRaw: ArrayList<String>,
+        var moveCommandFormLong: Boolean,
+        var specialCommandRaw: ArrayList<String>,
+        var specialCommandPossible: Boolean
 
     )
 
     private var cfi = CommandFormingInfo(arrayListOf(), false, arrayListOf(), false)
 
 
-    private var keyword_pools: MutableMap<String, KeywordPool> = mutableMapOf()
+    private var keywordPools: MutableMap<String, KeywordPool> = mutableMapOf()
     init {
-        keyword_pools["PIECE_NAMES"] = KeywordPool(listOf("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, "PIECE_NAME_CLASSIFIER")
-        keyword_pools["FILES"] = KeywordPool(listOf("A", "B", "C", "D", "E", "F", "G", "H"), false, "FILE_CLASSIFIER")
-        keyword_pools["RANKS"] = KeywordPool(listOf("1", "2", "3", "4", "5", "6", "7", "8"), false, "RANK_CLASSIFIER")
-        keyword_pools["SPECIAL_WORDS"] = KeywordPool(listOf("RESIGN", "CLOCK", "FROM", "UNDO"), true, "SPECIAL_WORD_")
+        keywordPools["PIECE_NAMES"] = KeywordPool(listOf("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, "PIECE_NAME_CLASSIFIER")
+        keywordPools["FILES"] = KeywordPool(listOf("A", "B", "C", "D", "E", "F", "G", "H"), false, "FILE_CLASSIFIER")
+        keywordPools["RANKS"] = KeywordPool(listOf("1", "2", "3", "4", "5", "6", "7", "8"), false, "RANK_CLASSIFIER")
+        keywordPools["SPECIAL_WORDS"] = KeywordPool(listOf("RESIGN", "CLOCK", "FROM", "UNDO"), true, "SPECIAL_WORD_")
     }
 
 
-    private fun extractSifRanges(buffer: FloatArray) : ArrayList<Pair<Int, Int>> {
-        val sifRanges = ArrayList<Pair<Int, Int>>()
+    private fun extractSifBorders(buffer: FloatArray) : ArrayList<Pair<Int, Int>> {
+        val sifBorders = ArrayList<Pair<Int, Int>>()
 
         //TODO Implement the logic prototyped in python here
 
-        sifRanges.add(Pair(0, buffer.size - 1))
-        return sifRanges
+        sifBorders.add(Pair(buffer.size / 4, 3 * buffer.size / 4))
+        return sifBorders
     }
 
 
     private fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
 
-        //TODO Given the original audioEvent and sif range, generate a new audioEvent, with the sif centered, rest zeros.
-
         val correctedAudioEvent = AudioEvent(TarsosDSPAudioFormat(0.0f, 0, 0, false, false))
-
         correctedAudioEvent.floatBuffer = FloatArray(audioEvent.floatBuffer.size)
 
-        Log.i(LOG_TAG, "New float buffer size: %s".format(correctedAudioEvent.floatBuffer.size.toString()))
-
+        audioEvent.floatBuffer.copyInto(
+            correctedAudioEvent.floatBuffer,
+            correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2,
+            startIndex,
+            endIndex
+        )
 
 
         return correctedAudioEvent
-
 
     }
 
     override fun process(audioEvent: AudioEvent?): Boolean {
 
 
-        val sifRanges = extractSifRanges(audioEvent!!.floatBuffer)
+        val sifBorders = extractSifBorders(audioEvent!!.floatBuffer)
 
 
-        for (sifRange in sifRanges) {
+        for (sifBorder in sifBorders) {
 
-            val generatedAudioEvent = generateAudioEvent(audioEvent, sifRange.first, sifRange.second)
+            val generatedAudioEvent = generateAudioEvent(audioEvent, sifBorder.first, sifBorder.second)
 
-            val mfcc_extractor = MFCC(audioEvent.floatBuffer.size, audioInfo.sampleRate.toFloat(), 44, 13, 300f, 3000f)
-            mfcc_extractor.process(generatedAudioEvent)
+            val mfccExtractor = MFCC(audioEvent.floatBuffer.size, audioInfo.sampleRate.toFloat(), 13, 44, 300f, 3000f)
+            mfccExtractor.process(generatedAudioEvent)
 
-            Log.v(LOG_TAG, "Eeh so this is mfcc: %s".format(mfcc_extractor.mfcc.get(0)))
+            Log.v(LOG_TAG, "Eeh so this is mfcc: %s".format(mfccExtractor.mfcc.size))
 //
 //
 //            val mfcc_buffer = ByteBuffer.allocate(44 * 13)
-//            val predictions = kss.predict(mfcc_buffer, keyword_pools.values)
+//            val predictions = kss.predict(mfcc_buffer, keywordPools.values)
 //
 //            // For now just take the first prediction
 //            val keyword = if (predictions.size > 0) predictions[0].first else ""
@@ -109,74 +109,74 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
         var command: Command? = null
 
 
-        if (keyword in keyword_pools["SPECIAL_WORDS"]!!.keywords) {
+        if (keyword in keywordPools["SPECIAL_WORDS"]!!.keywords) {
 
-            if (keyword == "FROM" && cfi.move_command_raw.size == 1) {
-                cfi.move_command_form_long = true
+            if (keyword == "FROM" && cfi.moveCommandRaw.size == 1) {
+                cfi.moveCommandFormLong = true
 
             } else {
-                cfi.special_command_raw.add(keyword)
+                cfi.specialCommandRaw.add(keyword)
 
-                cfi.special_command_possible = false
-                for (special_command in special_commands) {
+                cfi.specialCommandPossible = false
+                for (special_command in specialCommands) {
 
-                    if (cfi.special_command_raw == special_command.command) {
+                    if (cfi.specialCommandRaw == special_command.command) {
                         command = special_command
 
-                        cfi.special_command_raw = arrayListOf()
+                        cfi.specialCommandRaw = arrayListOf()
 
-                    } else if (cfi.special_command_raw == special_command.command.subList(
+                    } else if (cfi.specialCommandRaw == special_command.command.subList(
                             0,
-                            if (special_command.command.size > cfi.special_command_raw.size) cfi.special_command_raw.size else special_command.command.size
+                            if (special_command.command.size > cfi.specialCommandRaw.size) cfi.specialCommandRaw.size else special_command.command.size
                         )
                     ) {
-                        cfi.special_command_possible = true
+                        cfi.specialCommandPossible = true
                     }
 
                 }
 
-                if (!cfi.special_command_possible) {
-                    cfi.special_command_raw.clear()
+                if (!cfi.specialCommandPossible) {
+                    cfi.specialCommandRaw.clear()
                 }
             }
 
-        } else if (keyword in keyword_pools["PIECE_NAMES"]!!.keywords) {
-            cfi.move_command_raw.add(keyword)
+        } else if (keyword in keywordPools["PIECE_NAMES"]!!.keywords) {
+            cfi.moveCommandRaw.add(keyword)
 
-            keyword_pools["PIECE_NAMES"]!!.active = false
-            keyword_pools["FILES"]!!.active = true
+            keywordPools["PIECE_NAMES"]!!.active = false
+            keywordPools["FILES"]!!.active = true
 
-        } else if (keyword in keyword_pools["FILES"]!!.keywords) {
-            cfi.move_command_raw.add(keyword)
+        } else if (keyword in keywordPools["FILES"]!!.keywords) {
+            cfi.moveCommandRaw.add(keyword)
 
-            keyword_pools["FILES"]!!.active = false
-            keyword_pools["RANKS"]!!.active = true
+            keywordPools["FILES"]!!.active = false
+            keywordPools["RANKS"]!!.active = true
 
-        } else if (keyword in keyword_pools["RANKS"]!!.keywords) {
-            cfi.move_command_raw.add(keyword)
+        } else if (keyword in keywordPools["RANKS"]!!.keywords) {
+            cfi.moveCommandRaw.add(keyword)
 
-            if (cfi.move_command_form_long && cfi.move_command_raw.size < 5) {
+            if (cfi.moveCommandFormLong && cfi.moveCommandRaw.size < 5) {
 
-                keyword_pools["RANKS"]!!.active = false
-                keyword_pools["FILES"]!!.active = true
+                keywordPools["RANKS"]!!.active = false
+                keywordPools["FILES"]!!.active = true
 
             } else {
 
                 command = MoveCommand(
-                    piece_name = cfi.move_command_raw[0],
-                    origin_coordinate = if (cfi.move_command_form_long)
-                        Coordinate(cfi.move_command_raw[1], cfi.move_command_raw[2]) else
+                    piece_name = cfi.moveCommandRaw[0],
+                    origin_coordinate = if (cfi.moveCommandFormLong)
+                        Coordinate(cfi.moveCommandRaw[1], cfi.moveCommandRaw[2]) else
                         null,
-                    destination_coordinate = if (cfi.move_command_form_long)
-                        Coordinate(cfi.move_command_raw[3], cfi.move_command_raw[4]) else
-                        Coordinate(cfi.move_command_raw[1], cfi.move_command_raw[2])
+                    destination_coordinate = if (cfi.moveCommandFormLong)
+                        Coordinate(cfi.moveCommandRaw[3], cfi.moveCommandRaw[4]) else
+                        Coordinate(cfi.moveCommandRaw[1], cfi.moveCommandRaw[2])
                 )
 
-                cfi.move_command_raw.clear()
-                cfi.move_command_form_long = false
+                cfi.moveCommandRaw.clear()
+                cfi.moveCommandFormLong = false
 
-                keyword_pools["RANKS"]!!.active = false
-                keyword_pools["PIECE_NAMES"]!!.active = true
+                keywordPools["RANKS"]!!.active = false
+                keywordPools["PIECE_NAMES"]!!.active = true
 
             }
 
