@@ -6,6 +6,11 @@ import be.tarsos.dsp.AudioProcessor
 import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.mfcc.MFCC
 import com.example.mindchess.ui.Coordinate
+import org.jetbrains.kotlinx.multik.api.mk
+import org.jetbrains.kotlinx.multik.api.ndarray
+import org.jetbrains.kotlinx.multik.ndarray.*
+import org.jetbrains.kotlinx.multik.ndarray.data.*
+import org.jetbrains.kotlinx.multik.ndarray.operations.*
 
 
 private const val LOG_TAG = "SifExtractorTest"
@@ -13,7 +18,7 @@ private const val LOG_TAG = "SifExtractorTest"
 class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var handler: OnCommandFormed) : AudioProcessor {
 
     // SIF stands for silence-isolated frame.
-    private var sif_buffer: ArrayList<String> = arrayListOf() // Or other way of remembering the last part of the last sif.
+    private var sifBuffer: ArrayList<String> = arrayListOf() // Or other way of remembering the last part of the last sif.
 
     private var specialCommands: Array<SpecialCommand> = arrayOf(
         SpecialCommand(arrayListOf("RESIGN")),
@@ -45,9 +50,51 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     private fun extractSifBorders(buffer: FloatArray) : ArrayList<Pair<Int, Int>> {
         val sifBorders = ArrayList<Pair<Int, Int>>()
 
-        //TODO Implement the logic prototyped in python here
+        val signal = mk.ndarray(buffer)
+        val signalPower = signal.map {it * it}
 
-        sifBorders.add(Pair(buffer.size / 4, 3 * buffer.size / 4))
+        val dynamicRange = signalPower.max()!!.minus(signalPower.min()!!)
+
+
+
+
+        if (dynamicRange > 0.01) {
+
+            val stepSize = audioInfo.sampleRate / 22
+            val minSilenceDuration = stepSize * 4
+            val silenceThreshold = signalPower.average()
+
+            var currentStart = 0
+            var listeningForNewSif = true
+
+
+            for (i in buffer.indices step stepSize) {
+
+                val avgSignalAmplitude = signalPower[Slice(i, i + stepSize, 1)].average()
+
+                if (listeningForNewSif && avgSignalAmplitude > silenceThreshold) {
+                    currentStart = i
+                    listeningForNewSif = false
+
+                    if (sifBorders.size > 0 && currentStart - sifBorders[sifBorders.size - 1].second <= minSilenceDuration) {
+                        currentStart = sifBorders[sifBorders.size - 1].first
+                        sifBorders.removeAt(sifBorders.size - 1)
+                    }
+                }
+
+                if (!listeningForNewSif && avgSignalAmplitude < silenceThreshold || i >= buffer.size - stepSize) {
+                    sifBorders.add(Pair(currentStart, i))
+                    listeningForNewSif = true
+                }
+            }
+
+            //TODO Possibly implement sif correction (Just include a bit more of sifs, if other sifs aren't in the way.
+            // You know, don't cut a sif too strictly if nothing else was said... Give more context, more information.
+
+            //TODO Also, test all of this. Ideally with some visualization tool, look at that kotlin's letsplot library or whatever it was
+
+        }
+
         return sifBorders
     }
 
