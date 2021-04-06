@@ -24,7 +24,8 @@ private const val LOG_TAG = "SifExtractorTest"
 class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var handler: OnCommandFormed) : AudioProcessor {
 
     // SIF stands for silence-isolated frame.
-     private var lastSifBuffer : FloatArray? = null
+    private var lastSifBuffer = FloatArray(audioInfo.sampleRate)
+    private var lastSifLeakingOffset = 0
 
     private var specialCommands: Array<SpecialCommand> = arrayOf(
         SpecialCommand(arrayListOf("RESIGN")),
@@ -64,16 +65,16 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
         if (dynamicRange > 0.01) {
 
-            val stepSize = audioInfo.sampleRate / 22
+            val stepSize = audioInfo.sampleRate / 25
             val minSilenceDuration = stepSize * 4
             val silenceThreshold = signalPower.average()
 
 
-            var currentStart = -1 * (lastSifBuffer?.size ?: 0)
+            var currentStart = lastSifLeakingOffset
             var listeningForNewSif = lastSifBuffer == null
 
 
-            for (i in signalArray.indices step stepSize) {
+            for (i in 0..signalArray.size - 2 step stepSize) {
 
                 val avgSignalAmplitude = signalPower[Slice(i, i + stepSize, 1)].average()
 
@@ -93,19 +94,14 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
                 }
             }
 
-            if (currentStart != sifBorders[sifBorders.size - 1].first) {
-                lastSifBuffer = FloatArray(signalArray.size - currentStart)
-                signalArray.sliceArray(currentStart until signalArray.size).copyInto(lastSifBuffer!!)
-            } else {
-                lastSifBuffer = null
-            }
+            lastSifLeakingOffset = if (currentStart != sifBorders[sifBorders.size - 1].first) signalArray.size - currentStart else 0
 
             val correctedSifBorders = ArrayList<Pair<Int, Int>>()
 
             for (i in sifBorders.indices) {
-                val previousSifEnd = if (i > 0) sifBorders[i - 1].second + stepSize else 0
+                val previousSifEnd = if (i > 0) sifBorders[i - 1].second + stepSize else 0 //TODO It should really be 0, but the last one. Make it so that no compromises are made.
                 val futureSifStart = if (i < sifBorders.size - 1) sifBorders[i + 1].first else
-                    signalArray.size - (currentStart == sifBorders[sifBorders.size - 1].first).toInt() * (signalArray.size - currentStart)  // I'm sorry about this.
+                    signalArray.size - lastSifLeakingOffset
 
                 val middlePoint = (sifBorders[i].first + sifBorders[i].second) / 2
                 val startIndex = max(previousSifEnd, middlePoint - audioInfo.sampleRate / 2)
@@ -120,6 +116,13 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
         }
 
+        Log.i("extractSifBorders Test", "Num of SIFs: %s".format(sifBorders.size))
+
+        for (sifBorder in sifBorders) {
+            Log.i("sifBorders", "%s - %s".format(sifBorder.first, sifBorder.second))
+        }
+
+
         return sifBorders
     }
 
@@ -129,15 +132,47 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
         val correctedAudioEvent = AudioEvent(TarsosDSPAudioFormat(0.0f, 0, 0, false, false))
         correctedAudioEvent.floatBuffer = FloatArray(audioEvent.floatBuffer.size)
 
+        if (startIndex < 0) {
 
-        //TODO Deal with case when sifStart is < 0 :)
+            Log.i("generatedAudioEvent N Test", "Start: %s End: %s, Offset 1: %s - Offset 2: %s".format(
+                    startIndex.toString(),
+                    endIndex.toString(),
+                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2).toString(),
+                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2 - startIndex).toString()
+            ))
 
-        audioEvent.floatBuffer.copyInto(
-            correctedAudioEvent.floatBuffer,
-            correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2,
-            startIndex,
-            endIndex
-        )
+            correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex)
+
+            lastSifBuffer.copyInto(
+                    correctedAudioEvent.floatBuffer,
+                    correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2
+            )
+
+            audioEvent.floatBuffer.copyInto(
+                    correctedAudioEvent.floatBuffer,
+                    correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2 - startIndex,
+                    0,
+                    endIndex
+            )
+
+
+
+        } else {
+
+            Log.i("generatedAudioEvent P Test", "Start: %s End: %s, Offset: %s".format(
+                    startIndex.toString(),
+                    endIndex.toString(),
+                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2).toString()
+            ))
+
+            audioEvent.floatBuffer.copyInto(
+                    correctedAudioEvent.floatBuffer,
+                    correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2,
+                    startIndex,
+                    endIndex
+            )
+        }
+
 
 
         return correctedAudioEvent
@@ -173,6 +208,8 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 //                }
 //            }
         }
+
+        lastSifBuffer = audioEvent.floatBuffer
 
         return true
     }
