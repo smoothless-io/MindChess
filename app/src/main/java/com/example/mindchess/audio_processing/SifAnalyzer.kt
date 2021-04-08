@@ -24,8 +24,12 @@ private const val LOG_TAG = "SifExtractorTest"
 class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var handler: OnCommandFormed) : AudioProcessor {
 
     // SIF stands for silence-isolated frame.
+
     private var lastSifBuffer = FloatArray(audioInfo.sampleRate)
-    private var lastSifLeakingOffset = 0
+    private var lastSifLeakingOffset = audioInfo.bufferSize
+
+    // Positive offset, if no new SIF started (offset is length of appendable silence).
+    // Negative offset, if a SIF started (offset is length of that SIF).
 
     private var specialCommands: Array<SpecialCommand> = arrayOf(
         SpecialCommand(arrayListOf("RESIGN")),
@@ -50,18 +54,16 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
         keywordPools["PIECE_NAMES"] = KeywordPool(listOf("PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"), true, "PIECE_NAME_CLASSIFIER")
         keywordPools["FILES"] = KeywordPool(listOf("A", "B", "C", "D", "E", "F", "G", "H"), false, "FILE_CLASSIFIER")
         keywordPools["RANKS"] = KeywordPool(listOf("1", "2", "3", "4", "5", "6", "7", "8"), false, "RANK_CLASSIFIER")
-        keywordPools["SPECIAL_WORDS"] = KeywordPool(listOf("RESIGN", "CLOCK", "FROM", "UNDO"), true, "SPECIAL_WORD_")
+        keywordPools["SPECIAL_WORDS"] = KeywordPool(listOf("RESIGN", "CLOCK", "FROM", "UNDO"), true, "SPECIAL_WORD_CLASSIFIER")
     }
 
 
     private fun extractSifBorders(signalArray: FloatArray) : ArrayList<Pair<Int, Int>> {
-        var sifBorders = ArrayList<Pair<Int, Int>>()
+        val sifBorders = ArrayList<Pair<Int, Int>>()
 
         val signal = mk.ndarray(signalArray)
         val signalPower = signal.map {it * it}
-
         val dynamicRange = signalPower.max()!!.minus(signalPower.min()!!)
-
 
         if (dynamicRange > 0.01) {
 
@@ -69,10 +71,8 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
             val minSilenceDuration = stepSize * 4
             val silenceThreshold = signalPower.average()
 
-
-            var currentStart = lastSifLeakingOffset
-            var listeningForNewSif = lastSifBuffer == null
-
+            var currentStart = if (lastSifLeakingOffset > 0) 0 else lastSifLeakingOffset
+            var listeningForNewSif = lastSifLeakingOffset > 0
 
             for (i in 0..signalArray.size - 2 step stepSize) {
 
@@ -88,31 +88,23 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
                     }
                 }
 
-                if (!listeningForNewSif && avgSignalAmplitude < silenceThreshold || i >= signalArray.size - stepSize) {
+                if (!listeningForNewSif && (avgSignalAmplitude < silenceThreshold || i == signalArray.size - stepSize)) {
                     sifBorders.add(Pair(currentStart, i))
                     listeningForNewSif = true
                 }
             }
 
-            lastSifLeakingOffset = if (currentStart != sifBorders[sifBorders.size - 1].first) signalArray.size - currentStart else 0
 
-            val correctedSifBorders = ArrayList<Pair<Int, Int>>()
-
-            for (i in sifBorders.indices) {
-                val previousSifEnd = if (i > 0) sifBorders[i - 1].second + stepSize else 0 //TODO It should really be 0, but the last one. Make it so that no compromises are made.
-                val futureSifStart = if (i < sifBorders.size - 1) sifBorders[i + 1].first else
-                    signalArray.size - lastSifLeakingOffset
-
-                val middlePoint = (sifBorders[i].first + sifBorders[i].second) / 2
-                val startIndex = max(previousSifEnd, middlePoint - audioInfo.sampleRate / 2)
-                val endIndex = min(futureSifStart, middlePoint + audioInfo.sampleRate / 2)
-                correctedSifBorders.add(Pair(startIndex, endIndex))
-            }
-
-            sifBorders = correctedSifBorders
+            lastSifLeakingOffset = if (sifBorders.size > 0) {
+                if (currentStart != sifBorders[sifBorders.size - 1].first) -(signalArray.size - currentStart) else
+                    signalArray.size - sifBorders[sifBorders.size - 1].second
+                } else {
+                    audioInfo.sampleRate
+                }
 
 
             //TODO Test all of this. Ideally with some visualization tool, look at that kotlin's letsplot library or whatever it was.
+            //TODO If a SIF is leaking, its current start can be corrected right away. The rest of the SIFS will be corrected later.
 
         }
 
@@ -124,6 +116,26 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
 
         return sifBorders
+    }
+
+    private fun correctSifBorders(sifBorders: ArrayList<Pair<Int, Int>>) {
+
+//            val correctedSifBorders = ArrayList<Pair<Int, Int>>()
+//
+//            for (i in sifBorders.indices) {
+//                val previousSifEnd = if (i > 0) sifBorders[i - 1].second + stepSize else 0 //TODO It shouldn't really be 0, but the last one. Make it so that no compromises are made.
+//                val futureSifStart = if (i < sifBorders.size - 1) sifBorders[i + 1].first else
+//                    signalArray.size - lastSifLeakingOffset
+//
+//                val middlePoint = (sifBorders[i].first + sifBorders[i].second) / 2
+//                val startIndex = max(previousSifEnd, middlePoint - audioInfo.sampleRate / 2)
+//                val endIndex = min(futureSifStart, middlePoint + audioInfo.sampleRate / 2)
+//                correctedSifBorders.add(Pair(startIndex, endIndex))
+//            }
+//
+//            sifBorders = correctedSifBorders
+
+
     }
 
 
@@ -184,6 +196,13 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
         val sifBorders = extractSifBorders(audioEvent!!.floatBuffer)
 
+        val correctedSifBorders = correctSifBorders(sifBorders)
+
+        if (lastSifLeakingOffset < audioInfo.sampleRate) {
+            lastSifBuffer = audioEvent.floatBuffer
+        }
+
+
 
         for (sifBorder in sifBorders) {
 
@@ -209,7 +228,7 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 //            }
         }
 
-        lastSifBuffer = audioEvent.floatBuffer
+
 
         return true
     }
