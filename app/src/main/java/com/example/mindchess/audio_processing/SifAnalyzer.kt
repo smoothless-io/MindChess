@@ -59,7 +59,9 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
 
     private fun extractSifBorders(signalArray: FloatArray) : ArrayList<Pair<Int, Int>> {
-        val sifBorders = ArrayList<Pair<Int, Int>>()
+        var sifBorders = ArrayList<Pair<Int, Int>>()
+        var correctedSifBorders = ArrayList<Pair<Int, Int>>()
+
 
         val signal = mk.ndarray(signalArray)
         val signalPower = signal.map {it * it}
@@ -94,49 +96,53 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
                 }
             }
 
+            Log.i("extractSifBorders Test", "Num of SIFs: %s".format(sifBorders.size))
+            for (sifBorder in sifBorders) {
+                Log.i("sifBorders", "%s - %s".format(sifBorder.first, sifBorder.second))
+            }
 
-            lastSifLeakingOffset = if (sifBorders.size > 0) {
+
+            val currentSifLeakingOffset = if (sifBorders.size > 0) {
                 if (currentStart != sifBorders[sifBorders.size - 1].first) -(signalArray.size - currentStart) else
                     signalArray.size - sifBorders[sifBorders.size - 1].second
-                } else {
-                    audioInfo.sampleRate
-                }
+            } else {
+                audioInfo.sampleRate
+            }
 
+
+            correctedSifBorders = ArrayList()
+
+            for (i in sifBorders.indices) {
+                val earliestStart = if (i > 0) sifBorders[i - 1].second + audioInfo.sifOffset else -lastSifLeakingOffset
+                val latestEnd = if (i < sifBorders.size - 1) sifBorders[i + 1].first - audioInfo.sifOffset else
+                    if (currentSifLeakingOffset < 0) audioInfo.sampleRate + currentSifLeakingOffset else audioInfo.sampleRate
+
+
+                Log.i("latestEnd Test", "Latest End: %s".format(latestEnd.toString()))
+                Log.i("earliestStart Test", "Earliest Start: %s".format(earliestStart.toString()))
+                Log.i("currentSifLeakingOffest Test", "CSLO End: %s".format(currentSifLeakingOffset.toString()))
+
+                val sifCenter = (sifBorders[i].first + sifBorders[i].second) / 2
+                val affordableSifLength = min(min(sifCenter - earliestStart, latestEnd - sifCenter), audioInfo.sampleRate / 2)
+
+                correctedSifBorders.add(Pair(sifCenter - affordableSifLength, sifCenter + affordableSifLength))
+            }
+
+            sifBorders = correctedSifBorders
+            lastSifLeakingOffset = currentSifLeakingOffset
 
             //TODO Test all of this. Ideally with some visualization tool, look at that kotlin's letsplot library or whatever it was.
-            //TODO If a SIF is leaking, its current start can be corrected right away. The rest of the SIFS will be corrected later.
-
         }
 
-        Log.i("extractSifBorders Test", "Num of SIFs: %s".format(sifBorders.size))
 
-        for (sifBorder in sifBorders) {
-            Log.i("sifBorders", "%s - %s".format(sifBorder.first, sifBorder.second))
+        for (sifBorder in correctedSifBorders) {
+            Log.i("correctedSifBorders", "%s - %s".format(sifBorder.first, sifBorder.second))
         }
 
 
         return sifBorders
     }
 
-    private fun correctSifBorders(sifBorders: ArrayList<Pair<Int, Int>>) {
-
-//            val correctedSifBorders = ArrayList<Pair<Int, Int>>()
-//
-//            for (i in sifBorders.indices) {
-//                val previousSifEnd = if (i > 0) sifBorders[i - 1].second + stepSize else 0 //TODO It shouldn't really be 0, but the last one. Make it so that no compromises are made.
-//                val futureSifStart = if (i < sifBorders.size - 1) sifBorders[i + 1].first else
-//                    signalArray.size - lastSifLeakingOffset
-//
-//                val middlePoint = (sifBorders[i].first + sifBorders[i].second) / 2
-//                val startIndex = max(previousSifEnd, middlePoint - audioInfo.sampleRate / 2)
-//                val endIndex = min(futureSifStart, middlePoint + audioInfo.sampleRate / 2)
-//                correctedSifBorders.add(Pair(startIndex, endIndex))
-//            }
-//
-//            sifBorders = correctedSifBorders
-
-
-    }
 
 
     private fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
@@ -157,7 +163,9 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
             lastSifBuffer.copyInto(
                     correctedAudioEvent.floatBuffer,
-                    correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2
+                    correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2,
+                    lastSifBuffer.size + startIndex,
+                    lastSifBuffer.size
             )
 
             audioEvent.floatBuffer.copyInto(
@@ -194,15 +202,7 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
     override fun process(audioEvent: AudioEvent?): Boolean {
 
 
-        val sifBorders = extractSifBorders(audioEvent!!.floatBuffer)
-
-        val correctedSifBorders = correctSifBorders(sifBorders)
-
-        if (lastSifLeakingOffset < audioInfo.sampleRate) {
-            lastSifBuffer = audioEvent.floatBuffer
-        }
-
-
+        var sifBorders = extractSifBorders(audioEvent!!.floatBuffer)
 
         for (sifBorder in sifBorders) {
 
@@ -228,7 +228,7 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 //            }
         }
 
-
+        lastSifBuffer = audioEvent.floatBuffer
 
         return true
     }

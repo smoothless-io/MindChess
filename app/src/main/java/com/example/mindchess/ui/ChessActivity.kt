@@ -49,7 +49,8 @@ class ChessActivity : AppCompatActivity() {
     private var audioInfo = AudioInfo(
         sampleRate = 22050,
         bufferSize = 22050,
-        bufferOverlap = 0
+        bufferOverlap = 0,
+        sifOffset = 882
     )
 
     @RequiresApi(Build.VERSION_CODES.M)
