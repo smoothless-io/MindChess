@@ -8,12 +8,17 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.io.TarsosDSPAudioFormat
 import be.tarsos.dsp.io.android.AndroidAudioPlayer
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
+import be.tarsos.dsp.writer.WriterProcessor
 import com.example.mindchess.audio_processing.*
 import com.example.mindchess.ml.FileClassifier
 import com.example.mindchess.ml.RankClassifier
+import java.io.File
+import java.io.RandomAccessFile
+
 private const val LOG_TAG = "AudioTest"
 
 
@@ -103,6 +108,12 @@ class ChessActivity : AppCompatActivity() {
             ), audioInfo.bufferSize, AudioManager.STREAM_MUSIC
         )
 
+
+        val outputFile = File(filesDir, "write_test")
+        val randomAccessFile = RandomAccessFile(outputFile, "rw")
+        val fileWriter = WriterProcessor(TarsosDSPAudioFormat(audioInfo.sampleRate.toFloat(), 16, 1, true, false), randomAccessFile)
+
+
         val sifAnalyzer = SifAnalyzer(
             audioInfo = audioInfo,
             kss = KeywordSpottingService(rankClassifier, fileClassifier, pieceNameClassifier, specialWordClassifier),
@@ -112,19 +123,38 @@ class ChessActivity : AppCompatActivity() {
                     gameController?.processVoiceCommand(command)
                 }
 
+                override fun saveSIF(audioEvent: AudioEvent) {
+
+                    Log.i("Write test", audioEvent.byteBuffer.size.toString())
+                    Log.i("Write test", audioEvent.floatBuffer.size.toString())
+                    Log.i("Write test", audioEvent.floatBuffer[11000].toString())
+                    Log.i("Write test", audioEvent.byteBuffer[22000].toString())
+
+//                    fileWriter.process(audioEvent)
+//                    fileWriter.processingFinished()
+//                    Log.i("Write test", "Should be processed.")
+                }
+
             })
 
 
+
+
+
+        Log.i("Write test", filesDir.toString())
+
+
+
         //audioDispatcher.addAudioProcessor(audioPlayer)
+        audioDispatcher.addAudioProcessor(fileWriter)
         audioDispatcher.addAudioProcessor(sifAnalyzer)
 
 
         Thread(audioDispatcher, "Recording Thread").start()
     }
 
-    override fun onPause() {
-        super.onPause()
-    }
+
+
 
     override fun onDestroy() {
         super.onDestroy()

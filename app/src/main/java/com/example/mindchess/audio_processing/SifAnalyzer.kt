@@ -132,6 +132,8 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
             lastSifLeakingOffset = currentSifLeakingOffset
 
             //TODO Test all of this. Ideally with some visualization tool, look at that kotlin's letsplot library or whatever it was.
+        } else {
+            lastSifLeakingOffset = audioInfo.sampleRate
         }
 
 
@@ -147,7 +149,7 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
     private fun generateAudioEvent(audioEvent: AudioEvent, startIndex: Int, endIndex: Int) : AudioEvent {
 
-        val correctedAudioEvent = AudioEvent(TarsosDSPAudioFormat(0.0f, 0, 0, false, false))
+        val correctedAudioEvent = AudioEvent(TarsosDSPAudioFormat(audioInfo.sampleRate.toFloat(), 16, 1, true, false))
         correctedAudioEvent.floatBuffer = FloatArray(audioEvent.floatBuffer.size)
 
         if (startIndex < 0) {
@@ -212,6 +214,8 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
             mfccExtractor.process(generatedAudioEvent)
 
             Log.v(LOG_TAG, "Eeh so this is mfcc: %s".format(mfccExtractor.mfcc.size))
+
+            handler.saveSIF(generatedAudioEvent)
 //
 //
 //            val mfcc_buffer = ByteBuffer.allocate(44 * 13)
