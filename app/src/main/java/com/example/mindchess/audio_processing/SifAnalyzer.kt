@@ -117,11 +117,6 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
                 val latestEnd = if (i < sifBorders.size - 1) sifBorders[i + 1].first - audioInfo.sifOffset else
                     if (currentSifLeakingOffset < 0) audioInfo.sampleRate + currentSifLeakingOffset else audioInfo.sampleRate
 
-
-                Log.i("latestEnd Test", "Latest End: %s".format(latestEnd.toString()))
-                Log.i("earliestStart Test", "Earliest Start: %s".format(earliestStart.toString()))
-                Log.i("currentSifLeakingOffest Test", "CSLO End: %s".format(currentSifLeakingOffset.toString()))
-
                 val sifCenter = (sifBorders[i].first + sifBorders[i].second) / 2
                 val affordableSifLength = min(min(sifCenter - earliestStart, latestEnd - sifCenter), audioInfo.sampleRate / 2)
 
@@ -131,14 +126,8 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
             sifBorders = correctedSifBorders
             lastSifLeakingOffset = currentSifLeakingOffset
 
-            //TODO Test all of this. Ideally with some visualization tool, look at that kotlin's letsplot library or whatever it was.
         } else {
             lastSifLeakingOffset = audioInfo.sampleRate
-        }
-
-
-        for (sifBorder in correctedSifBorders) {
-            Log.i("correctedSifBorders", "%s - %s".format(sifBorder.first, sifBorder.second))
         }
 
 
@@ -153,15 +142,6 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
         correctedAudioEvent.floatBuffer = FloatArray(audioEvent.floatBuffer.size)
 
         if (startIndex < 0) {
-
-            Log.i("generatedAudioEvent N Test", "Start: %s End: %s, Offset 1: %s - Offset 2: %s".format(
-                    startIndex.toString(),
-                    endIndex.toString(),
-                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2).toString(),
-                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2 - startIndex).toString()
-            ))
-
-            correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex)
 
             lastSifBuffer.copyInto(
                     correctedAudioEvent.floatBuffer,
@@ -180,12 +160,6 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
 
         } else {
-
-            Log.i("generatedAudioEvent P Test", "Start: %s End: %s, Offset: %s".format(
-                    startIndex.toString(),
-                    endIndex.toString(),
-                    (correctedAudioEvent.floatBuffer.size / 2 - (endIndex - startIndex) / 2).toString()
-            ))
 
             audioEvent.floatBuffer.copyInto(
                     correctedAudioEvent.floatBuffer,
@@ -212,8 +186,6 @@ class SifAnalyzer(var audioInfo: AudioInfo, var kss: KeywordSpottingService, var
 
             val mfccExtractor = MFCC(audioEvent.floatBuffer.size, audioInfo.sampleRate.toFloat(), 13, 44, 300f, 3000f)
             mfccExtractor.process(generatedAudioEvent)
-
-            Log.v(LOG_TAG, "Eeh so this is mfcc: %s".format(mfccExtractor.mfcc.size))
 
             handler.saveSIF(generatedAudioEvent)
 //
